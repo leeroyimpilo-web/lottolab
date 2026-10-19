@@ -21,6 +21,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     startAutoSync()
+    if ('serviceWorker' in navigator && window.isSecureContext) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // App remains usable online if service workers are blocked.
+      })
+    }
   }, [])
 
   const value = useMemo(
