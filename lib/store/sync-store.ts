@@ -14,7 +14,7 @@ export interface SyncState {
   liveSourceConnected: boolean
 }
 
-const STORAGE_KEY = 'lottolab:sync:v1'
+const STORAGE_KEY = 'lottolab:sync:v2'
 const SERVER_STATE: SyncState = {
   status: 'idle',
   lastSync: null,
