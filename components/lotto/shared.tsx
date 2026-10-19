@@ -20,9 +20,9 @@ export function SectionHeading({ id, title, href, linkLabel = 'See all', classNa
 }
 
 const PROVENANCE = {
-  verified: { label: 'Verified result', icon: ShieldCheck, className: 'bg-success/15 text-success ring-success/30' },
+  verified: { label: 'Verified by feed', icon: ShieldCheck, className: 'bg-success/15 text-success ring-success/30' },
   demo: { label: 'Demo data', icon: FlaskConical, className: 'bg-bonus/15 text-bonus ring-bonus/30' },
-  unavailable: { label: 'Not available', icon: TriangleAlert, className: 'bg-white/5 text-muted-foreground ring-white/10' },
+  unavailable: { label: 'Unconfirmed in feed', icon: TriangleAlert, className: 'bg-white/5 text-muted-foreground ring-white/10' },
 } as const
 
 export function ProvenanceBadge({ provenance, className }: { provenance: DataProvenance; className?: string }) {
