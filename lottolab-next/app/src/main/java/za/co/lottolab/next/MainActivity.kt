@@ -54,7 +54,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var page by rememberSaveable{mutableStateOf("Home")};var gameId by rememberSaveable{mutableStateOf("lotto")};var details by remember{mutableStateOf<Draw?>(null)}
  val g=Games.get(gameId);val drawer=rememberDrawerState(DrawerValue.Closed);val scope=rememberCoroutineScope();val snackbar=remember{SnackbarHostState()};val context=LocalContext.current
  val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){}
- val pages=listOf("Home","My Tickets","Generate Numbers","Explore Numbers","Draw History","My Spending","Advanced Tools","Syndicates","Rules & Help")
+ val pages=listOf("Home","My Tickets","Generate Numbers","Explore Numbers","Draw History","My Spending","Advanced Tools","Syndicates","Backup & Export","Rules & Help")
  LaunchedEffect(message){message?.let{snackbar.showSnackbar(it);vm.message.value=null}}
  BackHandler(page!="Home" || details!=null){if(details!=null)details=null else page="Home"}
  ModalNavigationDrawer(drawerState=drawer,drawerContent={ModalDrawerSheet{
@@ -82,6 +82,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    "My Spending"->item{SpendingPanel(tickets)}
    "Advanced Tools"->item{WheelPanel(g,vm)}
    "Syndicates"->item{SyndicatePanel(syndicates,vm)}
+   "Backup & Export"->item{BackupPanel(tickets,syndicates,vm)}
    "Rules & Help"->item{RulesPanel()}
    "Notifications"->item{Column(verticalArrangement=Arrangement.spacedBy(12.dp)){
     Text("Results and corrections",style=MaterialTheme.typography.titleLarge)
@@ -334,9 +335,24 @@ fun parseMembers(s:String):List<Pair<String,Int>> = s.lines().filter{it.isNotBla
   Panel{Text("Current and previous rules",fontWeight=FontWeight.Bold);Text("Statistics default to the June 2026 period. Older results stay in separate game and rule groups. Compare periods uses eligible draw counts, not pooled rankings.");Text("The connected feed currently lacks Lotto 5 Max and retired Daily Lotto Plus results. Pre-November 2015 PowerBall records are excluded until their historical rules are confirmed.")}
   Panel{Text("What statistics can tell you",fontWeight=FontWeight.Bold);Text("Frequency, gaps, pairs and patterns describe past results. They cannot identify future winning numbers in an independent fair draw. A long absence does not make a number due.")}
   Panel{Text("Claims and payouts",fontWeight=FontWeight.Bold);Text("Keep your original ticket. A photo, generated line or app match is not proof of purchase. Confirm results, eligibility and claim deadlines with the official operator. Missing payouts remain pending; cascades are not estimated.")}
-  Panel{Text("Privacy and offline use",fontWeight=FontWeight.Bold);Text("Tickets, spending and syndicates are stored locally on this device. Photo text recognition runs on-device. No account or advertising tracker is included. Uninstalling clears local records; system backup is disabled in this preview. Use PDF exports for copies.")}
+  Panel{Text("Privacy and offline use",fontWeight=FontWeight.Bold);Text("Tickets, spending and syndicates are stored locally on this device. Photo text recognition runs on-device. No account or advertising tracker is included. Uninstalling clears local records; system backup is disabled in this preview. Use Backup & Export to keep a restorable copy.")}
   TextButton(onClick={c.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://www.nationallottery.co.za/")))}){Text("Official operator website ↗")}
   SourceLink()
   Text("18+ • Set a budget you can afford. LottoLab does not sell tickets or promise winnings.",style=MaterialTheme.typography.bodySmall,color=Muted)
+ }
+}
+
+@Composable fun BackupPanel(tickets:List<Ticket>,groups:List<Syndicate>,vm:LottoViewModel){
+ val c=LocalContext.current;val scope=rememberCoroutineScope()
+ val save=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")){uri->if(uri!=null)scope.launch{runCatching{kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO){c.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use{it.write(Backup.encode(tickets,groups))}?:error("Cannot write backup")};vm.message.value="Backup saved"}.onFailure{vm.message.value=it.message}}}
+ val restore=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->if(uri!=null)scope.launch{runCatching{val n=kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO){val json=c.contentResolver.openInputStream(uri)?.bufferedReader()?.use{reader->val buffer=CharArray(10000001);var total=0;while(total<buffer.size){val read=reader.read(buffer,total,buffer.size-total);if(read<0)break;total+=read};require(total<=10000000){"Backup too large"};String(buffer,0,total)}?:error("Cannot read backup");Backup.restore(c,json,tickets,groups)};vm.message.value="$n new records restored"}.onFailure{vm.message.value="Backup not imported: ${it.message}"}}}
+ val pdf=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")){uri->if(uri!=null)runCatching{Exports.pdf(c,uri,"Saved ticket register",tickets.flatMap{listOf("${Games.get(it.game).title} | ${it.date} | ${if(it.purchased)"Purchased" else "Favourite"}",it.line().display(),"Cost ${money(it.costCents)} | Received ${it.receivedCents?.let(::money)?:"not recorded"}","")})}.onFailure{vm.message.value=it.message}}
+ Column(verticalArrangement=Arrangement.spacedBy(12.dp)){
+  Text("Keep a copy of your records",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
+  Note("A backup contains your tickets, spending records and syndicate member names. Keep it somewhere private. Restoring adds new records and leaves existing IDs unchanged.")
+  Button(onClick={save.launch("LottoLab-Backup-${today()}.json")},modifier=Modifier.fillMaxWidth()){Text("Save restorable backup")}
+  OutlinedButton(onClick={restore.launch(arrayOf("application/json","text/plain"))},modifier=Modifier.fillMaxWidth()){Text("Restore backup")}
+  OutlinedButton(onClick={pdf.launch("LottoLab-Tickets-${today()}.pdf")},modifier=Modifier.fillMaxWidth()){Text("Export ticket register PDF")}
+  Text("${tickets.size} ticket lines • ${groups.size} syndicates",color=Muted)
  }
 }

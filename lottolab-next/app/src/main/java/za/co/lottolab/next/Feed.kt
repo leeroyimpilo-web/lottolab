@@ -41,16 +41,18 @@ object FeedParser {
   }
   var rejected=0
   val out=mutableMapOf<String,Draw>()
+  val conflicted=mutableSetOf<String>()
   for(i in 0 until rows.length()) {
    runCatching {
     val o=rows.getJSONObject(i);val date=LocalDate.parse(o.getString("date"))
     require(date<=now.atZone(ZoneId.of("Africa/Johannesburg")).toLocalDate())
     val game=Games.canonical(o.getString("game"),date)
-    val ns=o.getJSONArray("numbers");val numbers=(0 until ns.length()).map{ns.getInt(it)}.sorted()
+    val ns=o.getJSONArray("numbers");val numbers=(0 until ns.length()).map{require(ns.get(it).toString().matches(Regex("[0-9]+")));ns.getInt(it)}.sorted()
     val special=if(o.isNull("bonusBall"))null else o.getInt("bonusBall")
     val rule=Rules.validate(game,date,numbers,special);val id="$game:$date"
-    val d=Draw(id,game,date.toString(),numbers,special,rule.id,payouts[id]?:emptyList(),"BetTip",now.toString(),o.optString("sourceUrl"))
-    require(out[id]==null || out[id]?.numbers==d.numbers && out[id]?.special==d.special){"Conflicting duplicate"}
+    val d=Draw(id,game,date.toString(),numbers,special,rule.id,payouts[id]?:emptyList(),o.optString("provider","BetTip"),now.toString(),o.optString("sourceUrl"))
+    if(id in conflicted) error("Conflicting duplicate")
+    if(out[id]!=null && (out[id]?.numbers!=d.numbers || out[id]?.special!=d.special)){out.remove(id);conflicted+=id;error("Conflicting duplicate quarantined")}
     out[id]=d
    }.onFailure{rejected++}
   }
