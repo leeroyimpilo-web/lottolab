@@ -53,6 +53,9 @@ jobs:
           pnpm add @capacitor/core@7 @capacitor/android@7
           pnpm add -D @capacitor/cli@7
 
+      - name: Bundle real historical draw archive
+        run: node scripts/build-draw-seed.mjs
+
       - name: Type-check source
         run: pnpm exec tsc --noEmit
 
