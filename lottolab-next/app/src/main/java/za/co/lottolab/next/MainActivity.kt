@@ -70,7 +70,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
   when(page){
    "Home"->{
     item{Text("All your results.\nOne clear view.",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold);Text("South Africa • Current game rules",color=Muted,modifier=Modifier.padding(top=6.dp))}
-    item{Note("Independent companion • Published provider data. Check draw dates; refreshing does not guarantee a new result.")}
+    item{DataFreshness(draws)}
     Games.all.forEach{game->item{val d=draws.firstOrNull{it.game==game.id && it.date>="2026-06-01"};ResultCard(game,d){details=d}}}
     item{SourceLink()}
    }
@@ -107,6 +107,14 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
 }
 @Composable fun Panel(content:@Composable ColumnScope.()->Unit){Card(shape=RoundedCornerShape(18.dp),colors=CardDefaults.cardColors(containerColor=Color.White),modifier=Modifier.fillMaxWidth()){Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(10.dp),content=content)}}
 @Composable fun Note(text:String){Surface(color=Color(0xFFE8F0EB),shape=RoundedCornerShape(12.dp)){Text(text,Modifier.padding(12.dp),style=MaterialTheme.typography.bodySmall,color=Green)}}
+@Composable fun DataFreshness(draws:List<Draw>){
+ val ctx=LocalContext.current
+ val lastSync=ctx.getSharedPreferences("sync",0).getLong("lastSync",0L)
+ val formatted=if(lastSync>0L)java.time.format.DateTimeFormatter.ofPattern("d MMM yyyy HH:mm",Locale.ENGLISH)
+  .withZone(ZoneId.of("Africa/Johannesburg")).format(Instant.ofEpochMilli(lastSync)) else "Not connected yet"
+ val latest=draws.maxByOrNull{it.date}?.date?:"None loaded"
+ Note("${draws.size} saved draw records • Latest saved draw: $latest • Last successful online check: $formatted. Results are published provider data, not independently official-verified. Saved records work offline.")
+}
 @Composable fun SourceLink(){val c=LocalContext.current;TextButton(onClick={c.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse("https://bettip.co.za/")))}){Text("Results data by BetTip ↗")}}
 @Composable fun GamePicker(g:Game,onChange:(String)->Unit){var expanded by remember{mutableStateOf(false)};Box{OutlinedButton(onClick={expanded=true},modifier=Modifier.fillMaxWidth()){Text(g.title,Modifier.weight(1f));Icon(Icons.Default.ExpandMore,null)};DropdownMenu(expanded,onDismissRequest={expanded=false}){Games.all.forEach{DropdownMenuItem(text={Text(it.title)},onClick={onChange(it.id);expanded=false})}}}}
 @Composable fun Balls(numbers:List<Int>,special:Int?,color:Color){Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(5.dp)){numbers.forEach{n->Box(Modifier.weight(1f).aspectRatio(1f).background(color.copy(alpha=.13f),CircleShape),contentAlignment=Alignment.Center){Text(n.toString().padStart(2,'0'),fontWeight=FontWeight.Bold,color=Ink,fontSize=16.sp)}};special?.let{n->Box(Modifier.weight(1f).aspectRatio(1f).background(color,CircleShape),contentAlignment=Alignment.Center){Text(n.toString().padStart(2,'0'),fontWeight=FontWeight.Bold,color=if(color==Gold)Ink else Color.White,fontSize=16.sp)}}}}
@@ -123,24 +131,87 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
 }
 @Composable fun Field(value:String,onChange:(String)->Unit,label:String,single:Boolean=true){OutlinedTextField(value,onChange,label={Text(label)},singleLine=single,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(12.dp))}
 @Composable fun TicketEntry(g:Game,draws:List<Draw>,vm:LottoViewModel){
- var input by rememberSaveable(g.id){mutableStateOf("")};var date by rememberSaveable(g.id){mutableStateOf(today())};var purchased by rememberSaveable{mutableStateOf(false)};var checks by remember{mutableStateOf<List<Pair<Line,Check>>>(emptyList())};var error by remember{mutableStateOf<String?>(null)}
+ var input by rememberSaveable(g.id){mutableStateOf("")}
+ var date by rememberSaveable(g.id){mutableStateOf(today())}
+ var purchased by rememberSaveable{mutableStateOf(false)}
+ var checks by remember{mutableStateOf<List<Pair<Line,Check>>>(emptyList())}
+ var error by remember{mutableStateOf<String?>(null)}
+ var scanNeedsReview by remember(g.id){mutableStateOf(false)}
+ var scanMessage by remember(g.id){mutableStateOf<String?>(null)}
  val c=LocalContext.current
- val photo=rememberLauncherForActivityResult(ActivityResultContracts.GetContent()){uri->if(uri!=null){
-  runCatching{val recognizer=TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);recognizer.process(InputImage.fromFilePath(c,uri)).addOnSuccessListener{input=it.text;error="Review the extracted text. Keep one number line per row; add + PowerBall where needed. Nothing has been saved."}.addOnFailureListener{error=it.message}.addOnCompleteListener{recognizer.close()}}
-   .onFailure{error=it.message}
- }}
+ val photo=rememberLauncherForActivityResult(ActivityResultContracts.GetContent()){uri->
+  if(uri!=null){
+   runCatching {
+    val recognizer=TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    recognizer.process(InputImage.fromFilePath(c,uri))
+     .addOnSuccessListener {result->
+      val parsed=TicketScanParser.read(result.text,g)
+      input=if(parsed.lines.isNotEmpty())parsed.lines.joinToString("\n"){it.display()} else result.text
+      checks=emptyList()
+      scanNeedsReview=true
+      scanMessage=if(parsed.lines.isNotEmpty())
+       "${parsed.lines.size} complete lines extracted. ${parsed.skippedCandidates} possible incomplete lines skipped. Check each line and the draw date carefully. No ticket has been validated or saved."
+      else "No complete number lines could be recognised. Edit the extracted text to leave one valid number line per row."
+      error=null
+     }
+     .addOnFailureListener{error=it.message?:"Unable to read ticket photo"}
+     .addOnCompleteListener{recognizer.close()}
+   }.onFailure{error=it.message}
+  }
+ }
  Column(verticalArrangement=Arrangement.spacedBy(12.dp)){
   Text("Check your numbers",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
-  Note("Choose the draw date. Enter one line per row.${if(g.specialMax>0)" Format: 1 2 3 4 5 + 6" else " Do not enter the drawn bonus ball."}")
+  Note("Select the game and exact draw date. This checker does not validate a physical ticket with the lottery operator.")
   Field(date,{date=it;checks=emptyList()},"Draw date • YYYY-MM-DD")
-  Field(input,{input=it;checks=emptyList()},"${g.count} numbers from 1–${g.max}"+(if(g.specialMax>0)" + PowerBall 1–16" else ""),false)
+  TicketNumberPad(g){line->
+   input=if(input.isBlank())line.display() else input.trimEnd()+"\n"+line.display()
+   checks=emptyList()
+  }
+  Field(input,{input=it;checks=emptyList()},"${g.count} numbers from 1–${g.max}"+(if(g.specialMax>0)" + PowerBall 1–${g.specialMax}" else "")+" • one line per row",false)
+  val parsedInput=remember(input,g.id){runCatching{parseLines(input,g)}.getOrNull()}
+  if(parsedInput!=null)Text("${parsedInput.size} complete line${if(parsedInput.size==1)"" else "s"} ready for checking",color=Muted,style=MaterialTheme.typography.labelMedium)
   TextButton(onClick={photo.launch("image/*")}){Icon(Icons.Default.PhotoCamera,null);Text(" Import ticket photo")}
-  Button(onClick={runCatching{val d=LocalDate.parse(date);require(d>=Rules.cutover){"This checker accepts current-rule tickets from June 2026. Use history for older draws."};val lines=parseLines(input,g);val draw=draws.find{it.game==g.id && it.date==date};checks=lines.map{it to Checker.check(it,draw)};error=null}.onFailure{error=it.message}},modifier=Modifier.fillMaxWidth()){Text("Check these numbers")}
+  if(scanNeedsReview){
+   Note(scanMessage?:"Review all scanned numbers carefully before continuing.")
+   OutlinedButton(onClick={scanNeedsReview=false},modifier=Modifier.fillMaxWidth()){Text("I've checked the extracted numbers and date")}
+  }
+  Button(
+   enabled=!scanNeedsReview,
+   onClick={
+    runCatching {
+     val d=LocalDate.parse(date)
+     require(d>=Rules.cutover){"Use Draw History for dates before the June 2026 rule changes."}
+     require(Rules.forDraw(g.id,d)!=null){"Game not available for this draw date."}
+     val lines=parseLines(input,g)
+     val draw=draws.find{it.game==g.id && it.date==date}
+     checks=lines.map{it to Checker.check(it,draw)}
+     error=null
+    }.onFailure{error=it.message}
+   },
+   modifier=Modifier.fillMaxWidth()
+  ){Text("Check these numbers")}
   error?.let{Note(it)}
-  checks.forEach{(line,result)->Panel{Text(line.display(),fontWeight=FontWeight.Bold);Text("${result.matches} main matches"+(if(result.special)" + ${if(g.specialMax>0)"PowerBall" else "bonus"}" else ""));Text(result.status,color=Green);result.cents?.let{Text(money(it),style=MaterialTheme.typography.titleLarge)};if(result.matched.isNotEmpty())Text("Matched: ${result.matched.joinToString()}")}}
+  checks.forEach{(line,result)->Panel{
+   Text(line.display(),fontWeight=FontWeight.Bold)
+   Text("${result.matches} main matches"+(if(result.special)" + ${if(g.specialMax>0)"PowerBall" else "bonus"}" else ""))
+   Text(result.status,color=Green)
+   result.cents?.let{if(it>0)Text("Published payout: ${money(it)}",style=MaterialTheme.typography.titleLarge)}
+   if(result.matched.isNotEmpty())Text("Matched: ${result.matched.joinToString()}")
+  }}
   Row(verticalAlignment=Alignment.CenterVertically){Checkbox(purchased,{purchased=it});Text("I purchased these lines",Modifier.weight(1f))}
-  Text(if(purchased)"Records ${money(g.priceCents.toLong())} per line for this game. Add-on entries must also have a base-game entry." else "Save as favourites. No spending or winnings recorded.",style=MaterialTheme.typography.bodySmall,color=Muted)
-  OutlinedButton(onClick={runCatching{require(LocalDate.parse(date)>=Rules.cutover);val lines=parseLines(input,g);vm.save(g,lines,date,purchased)}.onFailure{error=it.message}},modifier=Modifier.fillMaxWidth()){Text(if(purchased)"Save purchased ticket" else "Save favourites")}
+  Text(if(purchased)"Records ${money(g.priceCents.toLong())} per line for this game. Add-ons require an eligible base-game entry; use the actual receipt as the record of purchase." else "Save as favourites. No spending or winnings recorded.",style=MaterialTheme.typography.bodySmall,color=Muted)
+  OutlinedButton(
+   enabled=!scanNeedsReview,
+   onClick={runCatching{
+    val chosenDate=LocalDate.parse(date)
+    require(chosenDate>=Rules.cutover){"Only current-rule tickets can be saved here."}
+    require(Rules.forDraw(g.id,chosenDate)!=null)
+    val lines=parseLines(input,g)
+    vm.save(g,lines,date,purchased)
+    error=null
+   }.onFailure{error=it.message}},
+   modifier=Modifier.fillMaxWidth()
+  ){Text(if(purchased)"Save purchased ticket" else "Save favourites")}
  }
 }
 
