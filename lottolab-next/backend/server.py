@@ -67,10 +67,20 @@ def fetch(url):
 
 def ingest(rows,payouts,source='BetTip'):
     now=dt.datetime.now(dt.timezone.utc).isoformat();accepted=rejected=0
+    fingerprints={};blocked=set()
+    for item in rows:
+        try:
+            key=canonical(item['game'],item['date'])+':'+item['date']
+            fingerprint=(tuple(sorted(item['numbers'])),item.get('bonusBall'))
+            if key in fingerprints and fingerprints[key]!=fingerprint:blocked.add(key)
+            fingerprints[key]=fingerprint
+        except (KeyError,TypeError):pass
     with connect() as con:
         for item in rows:
             try:
-                row=validate(item);row['provider']=source;key=row['game']+':'+row['date'];body=json.dumps(row,sort_keys=True)
+                row=validate(item);row['provider']=source;key=row['game']+':'+row['date']
+                if key in blocked:raise ValueError('Conflicting duplicate in feed')
+                body=json.dumps(row,sort_keys=True)
                 old=con.execute('SELECT body,revision FROM draws WHERE id=?',(key,)).fetchone()
                 revision=1 if not old else old[1]
                 if old and old[0]!=body:

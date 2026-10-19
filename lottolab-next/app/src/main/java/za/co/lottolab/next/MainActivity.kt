@@ -57,7 +57,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  val pages=listOf("Home","My Tickets","Generate Numbers","Explore Numbers","Draw History","My Spending","Advanced Tools","Syndicates","Backup & Export","Rules & Help")
  LaunchedEffect(message){message?.let{snackbar.showSnackbar(it);vm.message.value=null}}
  BackHandler(page!="Home" || details!=null){if(details!=null)details=null else page="Home"}
- ModalNavigationDrawer(drawerState=drawer,drawerContent={ModalDrawerSheet{
+ ModalNavigationDrawer(drawerState=drawer,drawerContent={ModalDrawerSheet(modifier=Modifier.verticalScroll(rememberScrollState())){
   Column(Modifier.padding(24.dp)){Text("LottoLab",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Black);Text("Your numbers. Clearly.",color=Muted)}
   pages.forEach{p->NavigationDrawerItem(label={Text(p)},selected=page==p,onClick={page=p;scope.launch{drawer.close()}},modifier=Modifier.padding(horizontal=12.dp))}
  }}){

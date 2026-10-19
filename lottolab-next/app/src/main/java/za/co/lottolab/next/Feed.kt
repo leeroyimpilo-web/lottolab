@@ -2,6 +2,7 @@ package za.co.lottolab.next
 
 import android.content.Context
 import androidx.room.withTransaction
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -71,7 +72,8 @@ object Sync {
   val payoutResult=runCatching{fetch("payouts")}
   val parsed=FeedParser.parse(raw,payoutResult.getOrNull())
   require(parsed.draws.isNotEmpty()){"No usable results returned. Saved results retained."}
-  var corrections=0;var fresh=0
+  var corrections=0;var fresh=0;var ticketMatches=0
+  val tickets=dao.observeTickets().first().filter{it.purchased}
   db.withTransaction {
    parsed.draws.forEach{candidate->
     val old=existing[candidate.id]?.let{Store.draw(it)}
@@ -81,12 +83,20 @@ object Sync {
     val changed=old!=null && (numberChange || old.prizes!=d.prizes)
     if(changed){corrections++;dao.revision(Revision(drawId=d.id,oldJson=Store.gson.toJson(old),changedAt=Instant.now().toString()));dao.alert(Alert("${d.id}:${old!!.revision+1}","Result updated", "${Games.all.find{it.id==d.game}?.title?:d.game} • ${d.date}. Recheck saved tickets."))}
     if(old==null && LocalDate.parse(d.date)>=LocalDate.now(ZoneId.of("Africa/Johannesburg")).minusDays(7)){fresh++;dao.alert(Alert(d.id,"New result", "${Games.all.find{it.id==d.game}?.title?:d.game} • ${d.date}"))}
-    dao.putDraws(listOf(Store.row(d.copy(revision=if(changed)old!!.revision+1 else old?.revision?:1))))
+    val revision=if(changed)old!!.revision+1 else old?.revision?:1
+    if(old==null || changed)tickets.filter{it.game==d.game && it.date==d.date}.forEach{ticket->
+     val check=runCatching{Checker.check(ticket.line(),d)}.getOrNull()
+     if(check!=null && (check.cents==null || check.cents>0)){
+      ticketMatches++
+      dao.alert(Alert("match:${ticket.id}:${d.id}:$revision","Saved ticket match","${Games.get(d.game).title} • ${d.date}: ${check.matches} main matches. ${check.status}. Confirm with the operator."))
+     }
+    }
+    dao.putDraws(listOf(Store.row(d.copy(revision=revision))))
    }
   }
   prefs.edit().putLong("lastSync",System.currentTimeMillis()).apply()
   if(archiveDue)prefs.edit().putLong("archiveAt",System.currentTimeMillis()).apply()
-  if(existing.isNotEmpty() && fresh+corrections>0) Notifications.show(context,"LottoLab results updated","$fresh new results • $corrections updates. Open to check your tickets.")
+  if(existing.isNotEmpty() && fresh+corrections>0) Notifications.show(context,"LottoLab results updated","$fresh new results • $corrections updates • $ticketMatches saved ticket matches. Open to review.")
   "${parsed.draws.size} results checked • ${parsed.rejected} unsupported/invalid records skipped"+(if(payoutResult.isFailure)" • Payout feed unavailable" else "")
  }}
  suspend fun seed(context:Context)=withContext(Dispatchers.IO){

@@ -13,6 +13,8 @@ class GatewayTest(unittest.TestCase):
   with server.connect() as c:self.assertEqual(c.execute('SELECT COUNT(*) FROM revisions').fetchone()[0],1)
  def test_quarantine(self):
   self.assertEqual(server.ingest([self.row([1,1,2,3,4,5])],[]),(0,1));self.assertEqual(server.payload('health')['draws'],0)
+ def test_conflicting_duplicates(self):
+  self.assertEqual(server.ingest([self.row(),self.row([1,2,3,4,5,8])],[]),(0,2))
  def test_stable_payload(self):
   server.ingest([self.row()],[]);self.assertEqual(len(server.payload('draws')['data']),1);self.assertEqual(server.payload('payouts')['data'],[])
 if __name__=='__main__':unittest.main()
