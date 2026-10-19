@@ -18,7 +18,7 @@ export function OfflineBanner() {
         >
           <p className="mx-auto flex max-w-lg items-center gap-2 px-4 py-2 text-xs font-medium">
             <CloudOff className="size-4 shrink-0" aria-hidden="true" />
-            {"You're offline. Showing saved draws — we'll update automatically when you reconnect."}
+            {"You're offline. Previously downloaded draws remain available on this device. LottoLab will check for updates when you reconnect."}
           </p>
         </motion.div>
       )}
