@@ -88,14 +88,14 @@ export async function syncNow() {
   set({ status: 'syncing', message: 'Checking for new draws…' })
   try {
     const result = await dataSource.refresh()
-    await mutate((key) => Array.isArray(key) && key[0] === 'draws')
+    await mutate((key) => Array.isArray(key) && (key[0] === 'draws' || key[0] === 'draw-counts'))
     set({
       status: 'success',
       lastSync: Date.now(),
       totalDraws: result.totalDraws,
       liveSourceConnected: result.liveSourceConnected,
       message: result.liveSourceConnected
-        ? 'All draws are up to date.'
+        ? 'Published results downloaded. Check draw dates for source delays.'
         : 'Demo data refreshed. No live results source is connected yet.',
     })
   } catch {
