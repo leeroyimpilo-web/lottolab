@@ -2,7 +2,7 @@
 // Draw data lives separately in IndexedDB. The service worker never caches the
 // external results feed, so a new online refresh always checks its source.
 const CACHE = 'lottolab-offline-shell-v1'
-const SHELL = ['/', '/images/lottolab-logo.png', '/images/lab-hero.png']
+const SHELL = ['/', '/images/lottolab-logo.png', '/images/lab-hero.png', '/data/lotto-seed.json']
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
