@@ -269,7 +269,20 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
     Panel{Text("Odd / even",fontWeight=FontWeight.Bold);(0..r.count).forEach{n->Text("$n odd / ${r.count-n} even: ${oddCounts[n]?:0} draws")}}
     val lowCounts=selected.groupingBy{it.numbers.count{n->n<=r.max/2}}.eachCount()
     Panel{Text("Low / high • low = 1–${r.max/2}",fontWeight=FontWeight.Bold);(0..r.count).forEach{n->Text("$n low / ${r.count-n} high: ${lowCounts[n]?:0} draws")}}
-    Panel{Text("Sums, spread and repeats",fontWeight=FontWeight.Bold);if(selected.isNotEmpty()){Text("Average sum: ${String.format(Locale.US,"%.1f",selected.map{it.numbers.sum()}.average())}");Text("Average spread: ${String.format(Locale.US,"%.1f",selected.map{it.numbers.max()-it.numbers.min()}.average())}");Text("Consecutive numbers: ${selected.count{it.numbers.sorted().zipWithNext().any{(a,b)->b-a==1}} draws");val repeats=selected.zipWithNext{a,b->a.numbers.intersect(b.numbers.toSet()).size};Text("Average repeats from previous draw: ${if(repeats.isEmpty())"—" else String.format(Locale.US,"%.1f",repeats.average())}")}}
+    Panel {
+     Text("Sums, spread and repeats",fontWeight=FontWeight.Bold)
+     if(selected.isNotEmpty()) {
+      val averageSum=String.format(Locale.US,"%.1f",selected.map{it.numbers.sum()}.average())
+      val averageSpread=String.format(Locale.US,"%.1f",selected.map{it.numbers.max()-it.numbers.min()}.average())
+      val consecutiveCount=selected.count{it.numbers.sorted().zipWithNext().any{(a,b)->b-a==1}}
+      val repeats=selected.zipWithNext{a,b->a.numbers.intersect(b.numbers.toSet()).size}
+      val averageRepeats=if(repeats.isEmpty())"—" else String.format(Locale.US,"%.1f",repeats.average())
+      Text("Average sum: $averageSum")
+      Text("Average spread: $averageSpread")
+      Text("Consecutive numbers: $consecutiveCount draws")
+      Text("Average repeats from previous draw: $averageRepeats")
+     }
+    }
     Note("Common pattern categories contain many different combinations. A particular line in a common category is not more likely than any other valid line.")
    }
    if(tab=="Heatmap"){

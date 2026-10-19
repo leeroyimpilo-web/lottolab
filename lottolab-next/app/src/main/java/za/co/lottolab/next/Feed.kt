@@ -86,7 +86,7 @@ object Sync {
     val revision=if(changed)old!!.revision+1 else old?.revision?:1
     if(old==null || changed)tickets.filter{it.game==d.game && it.date==d.date}.forEach{ticket->
      val check=runCatching{Checker.check(ticket.line(),d)}.getOrNull()
-     if(check!=null && (check.cents==null || check.cents>0)){
+     if(check!=null && (check.cents?.let{it>0} != false)){
       ticketMatches++
       dao.alert(Alert("match:${ticket.id}:${d.id}:$revision","Saved ticket match","${Games.get(d.game).title} • ${d.date}: ${check.matches} main matches. ${check.status}. Confirm with the operator."))
      }
@@ -104,7 +104,7 @@ object Sync {
   if(db.dao().draws().isEmpty())runCatching {
    val raw=java.util.zip.GZIPInputStream(context.assets.open("draws.json.gz")).bufferedReader().readText()
    val payouts=java.util.zip.GZIPInputStream(context.assets.open("payouts.json.gz")).bufferedReader().readText()
-   val parsed=FeedParser.parse(raw,payouts,Instant.parse("2026-10-19T22:00:00Z"))
+   val parsed=FeedParser.parse(raw,payouts,Instant.parse("2026-10-19T21:33:00Z"))
    db.dao().putDraws(parsed.draws.map{Store.row(it)})
   }
  }
