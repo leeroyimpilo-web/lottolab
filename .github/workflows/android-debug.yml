@@ -53,8 +53,11 @@ jobs:
           pnpm add @capacitor/core@7 @capacitor/android@7
           pnpm add -D @capacitor/cli@7
 
-      - name: Bundle real historical draw archive
-        run: node scripts/build-draw-seed.mjs
+      - name: Try to bundle historical draws (network optional)
+        run: |
+          if ! node scripts/build-draw-seed.mjs; then
+            echo '::warning::Lottery feed timed out or was unavailable. Building with existing empty/verified seed; users can sync when online.'
+          fi
 
       - name: Type-check source
         run: pnpm exec tsc --noEmit
