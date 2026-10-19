@@ -60,7 +60,7 @@ object FeedParser {
 object Sync {
  private val mutex=Mutex()
  private val client=OkHttpClient.Builder().connectTimeout(20,TimeUnit.SECONDS).readTimeout(60,TimeUnit.SECONDS).callTimeout(90,TimeUnit.SECONDS).build()
- private fun fetch(path:String):String=client.newCall(Request.Builder().url("https://bettip.co.za/api/v1/lotto/$path.json").header("User-Agent","LottoLabNext/1.0 (lottery research companion)").build()).execute().use{require(it.isSuccessful){"Data provider returned ${it.code}"};it.body!!.string()}
+ private fun fetch(path:String):String=client.newCall(Request.Builder().url("${BuildConfig.FEED_BASE_URL}$path.json").header("User-Agent","LottoLabNext/1.0 (lottery research companion)").build()).execute().use{require(it.isSuccessful){"Data provider returned ${it.code}"};it.body!!.string()}
  suspend fun run(context:Context,full:Boolean=false):String=mutex.withLock{withContext(Dispatchers.IO){
   val db=Store.db(context);val dao=db.dao();val existing=dao.draws().associateBy{it.id}
   val prefs=context.getSharedPreferences("sync",0)
