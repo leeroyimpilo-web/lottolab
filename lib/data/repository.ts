@@ -3,11 +3,11 @@
 import useSWR from 'swr'
 import { GAMES, type GameId } from '@/lib/lottery/games'
 import type { Draw } from '@/lib/lottery/types'
-import { demoSource } from './demo-source'
+import { bettipSource } from './bettip-source'
 import type { LotteryDataSource } from './source'
 
-/** Swap this for the production LottoLab data source. UI components never import a source directly. */
-export const dataSource: LotteryDataSource = demoSource
+/** Published SA results, with on-device persistence and no fabricated fallback. */
+export const dataSource: LotteryDataSource = bettipSource
 
 export function useDraws(gameId: GameId) {
   const { data, error, isLoading, mutate } = useSWR<Draw[]>(['draws', gameId], () => dataSource.getDraws(gameId), {
