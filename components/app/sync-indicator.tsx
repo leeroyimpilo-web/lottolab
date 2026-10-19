@@ -18,13 +18,13 @@ export function SyncIndicator({ className }: { className?: string }) {
         'inline-flex min-h-8 items-center gap-1.5 rounded-full bg-white/5 px-2.5 text-[11px] font-medium text-muted-foreground ring-1 ring-white/10 transition-colors hover:text-foreground',
         className,
       )}
-      aria-label={online ? `Data synced ${formatRelative(sync.lastSync)}. Open data updates.` : 'Offline. Open data updates.'}
+      aria-label={online ? `Data updated ${formatRelative(sync.lastSync)}. Open data updates.` : 'Offline. Open data updates.'}
     >
       {online ? (
         <>
           <span className="relative flex size-2">
             {syncing && <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-75" />}
-            <span className={cn('relative inline-flex size-2 rounded-full', syncing ? 'bg-primary' : 'bg-success')} />
+            <span className={cn('relative inline-flex size-2 rounded-full', syncing ? 'bg-primary' : sync.status === 'error' ? 'bg-bonus' : sync.lastSync ? 'bg-success' : 'bg-muted-foreground')} />
           </span>
           {syncing ? (
             <span className="flex items-center gap-1">
@@ -32,7 +32,7 @@ export function SyncIndicator({ className }: { className?: string }) {
               Updating
             </span>
           ) : (
-            <span suppressHydrationWarning>Synced {formatRelative(sync.lastSync).toLowerCase()}</span>
+            <span suppressHydrationWarning>{sync.lastSync ? `Updated ${formatRelative(sync.lastSync).toLowerCase()}` : sync.status === 'error' ? 'Update failed' : 'Check results'}</span>
           )}
         </>
       ) : (
