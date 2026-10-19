@@ -20,12 +20,12 @@ export const metadata: Metadata = {
     'Latest South African Lotto, PowerBall and Daily Lotto results, number statistics, a smart number generator and a personal ticket checker.',
   generator: 'v0.app',
   applicationName: 'LottoLab',
-  icons: { icon: '/images/lottolab-logo.png', apple: '/images/lottolab-logo.png' },
+  icons: { icon: '/icon.svg', apple: '/apple-icon.png' },
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'dark',
-  themeColor: '#0a0f2c',
+  colorScheme: 'light',
+  themeColor: '#087f4c',
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
@@ -33,11 +33,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-ZA" className={`dark ${inter.variable} ${poppins.variable}`}>
+    <html lang="en-ZA" className={`${inter.variable} ${poppins.variable}`}>
       <body className="bg-background font-sans text-foreground antialiased">
         <AppProviders>
           <AppShell>{children}</AppShell>
-          <Toaster position="top-center" theme="dark" richColors />
+          <Toaster position="top-center" theme="light" richColors />
         </AppProviders>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

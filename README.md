@@ -1,6 +1,15 @@
 # LottoLab 🇿🇦
 
-A mobile-first South African lottery research app built with Next.js, React and TypeScript. The current v0 visual theme is preserved.
+A mobile-first South African lottery research app built with Next.js, React and TypeScript. Sprint 1 establishes the flat vector/card National Lottery-inspired UI, preserving the existing Next.js and Capacitor codebase.
+
+## Sprint 1 UI implementation
+
+- Six results cards appear on the home page; empty feeds show unavailable states, not invented numbers.
+- Global header: vector LottoLab logo, hamburger menu, date, live-refresh button and notifications.
+- Fixed Check Ticket button on the home page and secondary features in a side drawer.
+- Flat green/yellow/red/blue palette and simple solid lottery balls.
+- This remains a Next.js/Capacitor Android project, **not** a Kotlin/Room rewrite.
+- BetTip is still the only live source. Lotto 5 Max, official payout confirmation and ticket camera scanning remain to be integrated.
 
 ## What works in source
 

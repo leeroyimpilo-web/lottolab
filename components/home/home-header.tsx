@@ -1,58 +1,39 @@
 'use client'
-
-import { Menu } from 'lucide-react'
-import Image from 'next/image'
+import Link from 'next/link'
+import { Menu, RefreshCw, TicketCheck } from 'lucide-react'
 import { useApp } from '@/components/app/app-providers'
-import { SyncIndicator } from '@/components/app/sync-indicator'
-import { Button } from '@/components/ui/button'
+import { NotificationsSheet } from '@/components/home/notifications-sheet'
 import { useNow } from '@/hooks/use-now'
-import { NotificationsSheet } from './notifications-sheet'
-
-function greeting(hour: number) {
-  if (hour < 12) return 'Good morning'
-  if (hour < 18) return 'Good afternoon'
-  return 'Good evening'
-}
+import { syncNow, useOnline, useSyncState } from '@/lib/store/sync-store'
 
 export function HomeHeader() {
   const { setDrawerOpen } = useApp()
   const now = useNow()
-  const date = now ? new Date(now) : null
-
+  const online = useOnline()
+  const sync = useSyncState()
+  const syncing = sync.status === 'syncing'
   return (
-    <header className="flex flex-col gap-5 pt-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <Image
-            src="/images/lottolab-logo.png"
-            alt="LottoLab"
-            width={44}
-            height={44}
-            priority
-            className="size-11 rounded-xl object-cover shadow-[0_0_24px_-4px_var(--accent)]"
-          />
-          <span className="font-heading text-xl font-bold tracking-tight">
-            Lotto<span className="text-gradient">Lab</span>
+    <header className="sticky top-0 z-30 -mx-4 border-b border-border bg-card px-4 pt-[calc(10px+env(safe-area-inset-top))] pb-3">
+      <div className="flex items-center gap-1.5">
+        <button type="button" onClick={() => setDrawerOpen(true)} aria-label="Open features menu"
+          className="grid size-10 shrink-0 place-items-center rounded-xl hover:bg-muted">
+          <Menu className="size-6" aria-hidden="true" />
+        </button>
+        <Link href="/" className="flex min-w-0 flex-1 items-center gap-2">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-white" aria-hidden="true"><TicketCheck className="size-5" /></span>
+          <span className="min-w-0">
+            <span className="block font-heading text-lg font-extrabold leading-5">Lotto<span className="text-primary">Lab</span></span>
+            <span className="block truncate text-[11px] text-muted-foreground" suppressHydrationWarning>
+              {now ? new Date(now).toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : 'South African lotto'}
+            </span>
           </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <NotificationsSheet />
-          <Button variant="glass" size="icon-touch" onClick={() => setDrawerOpen(true)} aria-label="Open menu">
-            <Menu />
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex items-end justify-between gap-3">
-        <div className="flex flex-col gap-0.5">
-          <p className="min-h-5 text-sm text-muted-foreground" suppressHydrationWarning>
-            {date ? date.toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long' }) : '\u00a0'}
-          </p>
-          <h1 className="text-[26px] leading-tight font-bold text-balance">
-            {date ? greeting(date.getHours()) : 'Welcome back'}, <span className="text-gradient">scientist</span>
-          </h1>
-        </div>
-        <SyncIndicator className="shrink-0" />
+        </Link>
+        <button type="button" onClick={() => void syncNow()} disabled={!online || syncing}
+          aria-label={syncing ? 'Updating draw results' : 'Update draw results'} title={online ? 'Refresh latest draws' : 'Offline'}
+          className="grid size-10 shrink-0 place-items-center rounded-xl hover:bg-muted disabled:opacity-40">
+          <RefreshCw className={syncing ? 'size-5 animate-spin' : 'size-5'} aria-hidden="true" />
+        </button>
+        <NotificationsSheet />
       </div>
     </header>
   )

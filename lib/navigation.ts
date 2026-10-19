@@ -38,23 +38,23 @@ export interface NavSection {
 
 export const NAV_SECTIONS: NavSection[] = [
   {
-    title: 'Main',
+    title: 'Results & Tickets',
     items: [
-      { label: 'Home', href: '/', icon: Home },
-      { label: 'Latest Results', href: '/results', icon: Trophy },
-      { label: 'Generate Numbers', href: '/generate', icon: Sparkles },
-      { label: 'Check My Numbers', href: '/check', icon: ScanSearch },
+      { label: 'Home — All Results', href: '/', icon: Home },
+      { label: 'Results History', href: '/results', icon: Trophy },
+      { label: 'Pick My Numbers', href: '/generate', icon: Sparkles },
+      { label: 'Check Ticket', href: '/check', icon: ScanSearch },
     ],
   },
   {
-    title: 'Lotto Laboratory',
+    title: 'Lotto Intelligence',
     items: [
       { label: 'Number Frequency', href: '/lab/frequency', icon: BarChart3, description: 'How often each number has been drawn' },
-      { label: 'Hot & Cold Numbers', href: '/lab/hot-cold', icon: Flame, description: 'Recently common and rare numbers' },
-      { label: 'Combination Analyzer', href: '/lab/combinations', icon: Combine, description: 'Has your combination ever come up?' },
+      { label: 'Hot, Cold & Gaps', href: '/lab/hot-cold', icon: Flame, description: 'Recently common and rare numbers' },
+      { label: 'Analyse My Numbers', href: '/lab/combinations', icon: Combine, description: 'Has your combination ever come up?' },
       { label: 'Historical Draws', href: '/lab/history', icon: History, description: 'Browse and compare past draws' },
       { label: 'Number Patterns', href: '/lab/patterns', icon: Waypoints, description: 'Odd/even, ranges and consecutive numbers' },
-      { label: 'Probability Explorer', href: '/lab/probability', icon: Percent, description: 'Your real odds for every prize' },
+      { label: 'Jackpot Odds', href: '/lab/probability', icon: Percent, description: 'Your real odds for every prize' },
       { label: 'Advanced Statistics', href: '/lab/advanced', icon: Sigma, description: 'Heatmaps and sum distributions' },
     ],
   },
@@ -68,7 +68,7 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: 'Information',
+    title: 'Help & Information',
     items: [
       { label: 'Lottery Game Guide', href: '/info/guide', icon: Library },
       { label: 'User Manual', href: '/info/manual', icon: BookOpen },
