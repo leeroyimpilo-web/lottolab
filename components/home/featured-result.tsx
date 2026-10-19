@@ -54,13 +54,13 @@ export function FeaturedResult() {
           </div>
         ) : error || !latest ? (
           <p className="text-sm text-muted-foreground">
-            {"We couldn't load this game's results right now. Your saved draws will appear once we reconnect."}
+            {"We couldn't load this game's results right now. Available saved draws will appear once downloaded. Check Data Updates."}
           </p>
         ) : (
           <>
             <p className="flex items-center gap-1.5 text-sm text-foreground/80">
               <Hash className="size-3.5" aria-hidden="true" />
-              Draw {latest.drawNumber} · {formatDayDate(latest.date)}
+              {latest.drawNumber > 0 ? `Draw ${latest.drawNumber} · ` : ''}{formatDayDate(latest.date)}
             </p>
             <BallRow
               main={latest.main}
@@ -80,7 +80,7 @@ export function FeaturedResult() {
               <div className="rounded-2xl bg-black/25 p-3 ring-1 ring-white/10 backdrop-blur-sm">
                 <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
                   <CalendarClock className="size-3" aria-hidden="true" />
-                  Next draw {next ? `in ${formatCountdown(next, now!)}` : ''}
+                  Expected next draw {next ? `in ${formatCountdown(next, now!)}` : ''}
                 </p>
                 <p className="font-heading text-lg font-bold text-bonus tabular-nums">
                   {latest.nextJackpot ? `≈ ${formatCompactRand(latest.nextJackpot)}` : 'To be announced'}
