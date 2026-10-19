@@ -16,6 +16,7 @@ export default function HomePage() {
       <QuickActions />
       <StatsOverview />
       <Activity />
+      <p className="pb-3 text-center text-xs leading-relaxed text-muted-foreground">Published draw data by <a href="https://bettip.co.za/" target="_blank" rel="noopener noreferrer" className="underline">BetTip</a>. LottoLab is independent and is not affiliated with the National Lottery.</p>
     </div>
   )
 }
