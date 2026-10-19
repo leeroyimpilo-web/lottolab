@@ -1,0 +1,40 @@
+name: LottoLab Next Native Android
+on:
+  push:
+    branches: [main]
+    paths: ['lottolab-next/**', '.github/workflows/lottolab-next.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Install platform
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Test and build fresh native project
+        working-directory: lottolab-next
+        run: gradle --no-daemon :core:test :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: LottoLab-Next-Reports
+          path: |
+            lottolab-next/core/build/reports/
+            lottolab-next/app/build/reports/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LottoLab-Next-Android-APK
+          path: lottolab-next/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
