@@ -1,0 +1,11 @@
+{
+  "appId": "za.co.lottolab.mobile",
+  "appName": "LottoLab",
+  "webDir": "out",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}
