@@ -35,12 +35,19 @@ export function StatsOverview() {
     <section aria-labelledby="stats-title" className="flex flex-col gap-3">
       <SectionHeading id="stats-title" title="Statistics overview" href="/lab" linkLabel="Open Lab" />
 
-      {isLoading || !stats ? (
+      {isLoading ? (
         <div className="grid grid-cols-2 gap-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-24 rounded-2xl bg-white/5" />
           ))}
         </div>
+      ) : !stats ? (
+        <Panel>
+          <p className="text-sm font-semibold">Statistics not available yet</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Connect once to download published draws. Games not supplied by the current feed will remain empty, rather than using generated sample numbers.
+          </p>
+        </Panel>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-2">
