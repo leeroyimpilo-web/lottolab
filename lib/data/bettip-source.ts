@@ -94,13 +94,29 @@ async function writeCache(draws: Draw[]): Promise<void> {
   }
 }
 
+async function bundledDraws(): Promise<Draw[]> {
+  // In the Android APK this JSON file is included inside the application
+  // and is readable without mobile data or Wi-Fi from its first launch.
+  try {
+    const response = await fetch('/data/lotto-seed.json')
+    if (!response.ok) return []
+    return parseFeedRows(await response.json())
+  } catch {
+    return []
+  }
+}
+
 async function cachedDraws(): Promise<Draw[]> {
   if (inMemory) return inMemory
   if (!cachePromise) {
-    cachePromise = readCache().then((draws) => {
+    cachePromise = (async () => {
+      const stored = await readCache()
+      const bundled = await bundledDraws()
+      const draws = mergeDraws(bundled, stored)
       inMemory = draws
+      if (draws.length && !stored.length) void writeCache(draws)
       return draws
-    })
+    })()
   }
   return cachePromise
 }
