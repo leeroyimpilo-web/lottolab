@@ -41,12 +41,12 @@ function normalize(row) {
 }
 
 const response = await fetch(FEED, { signal: AbortSignal.timeout(45000) })
-if (!response.ok) throw Error(\`Draw snapshot failed: HTTP \${response.status}\`)
+if (!response.ok) throw Error(`Draw snapshot failed: HTTP ${response.status}`)
 const payload = await response.json()
 if (!Array.isArray(payload.data)) throw Error('Draw snapshot failed: unrecognized source data')
 const all = payload.data.map(normalize).filter(Boolean)
-const unique = [...new Map(all.map((row) => [\`\${row.game}:\${row.date}\`, row])).values()]
+const unique = [...new Map(all.map((row) => [`${row.game}:${row.date}`, row])).values()]
 if (unique.length < 20) throw Error('Draw snapshot failed: current-era history looks incomplete')
 await mkdir(path.dirname(DEST), { recursive: true })
 await writeFile(DEST, JSON.stringify(unique) + '\n', 'utf8')
-console.log(\`Bundled \${unique.length} real draw records from BetTip; current-rule era only.\`)
+console.log(`Bundled ${unique.length} real draw records from BetTip; current-rule era only.`)
