@@ -25,10 +25,24 @@ The root workflow `.github/workflows/lottolab-next.yml` builds this project inde
 - Frequency, observed gaps, pairs/triples, group history, odd/even, low/high, sum/spread, prior-draw repeats and horizontal heatmap.
 - Explicit comparison of per-period number appearance rates. No mixed-period rankings.
 - Full wheel generation (maximum 2,000 lines), cost planning, overlap summary, sharing and multipage PDF export.
+- Sprint 1: tap-to-select main numbers and PowerBall; conservative ticket-photo pre-parser with explicit manual review; saved-result freshness display.
+- Sprint 2: consecutive eligible 1–10 draw ticket planner and automatic saved-ticket review states (future, not downloaded, unconfirmed payout, possible published payout). Existing Room schema retained.
+- Sprint 3: Combination Explorer with selectable single game/rule period, joint historical subset counts, match histograms, and ranked matching draw dates. No future predictions.
+- Sprint 3: Ticket Portfolio analyser distinguishing same-draw duplicates from legitimate repeats across games and dates; main-number overlap, recorded cost, purchased/favourite separation.
+- Sprint 3: Results & Sources screen showing per-game current-period availability, last stored date, provider, and coverage of prize divisions. Missing results remain missing.
+
 - Purchased/favourite distinction; spending by draw month and manually recorded received winnings.
 - Validated JSON backup/restore for tickets and syndicates; import merges new IDs without replacing existing records.
 - Local syndicate share/payout records with explicit cent-rounding policy.
 - Standard-library Python SQLite gateway, scheduled ingestion, validation/quarantine, revision log, ETags, optional ResultsZA credentials kept server-side.
+
+## Sprint 3 research boundaries
+
+Historical combination matches count **only draws actually saved to the device** and never mix changed game formats. A historical joint appearance, gap, or apparent pattern cannot improve next-draw odds. Bonus/PowerBall analysis remains separate.
+
+Portfolio uniqueness is defined by **game, draw date, all main numbers and PowerBall where applicable**. Two same-number lines on separate dates are not duplicates. Two paid identical lines on the same draw may be intentional and may affect any eventual payout quantity; they simply do not represent an additional distinct outcome. Largest main-number overlap is skipped for portfolios larger than 300 unique lines per draw to avoid heavy processing.
+
+The optional ResultsZA Lotto 5 Max API adapter remains **server-side only**, requires valid credentials, and is not connected to the distributed preview by default. Sprint 3 does not claim the Lotto 5 Max archive is complete or officially verified.
 
 ## Honest preview limitations / release gates
 
