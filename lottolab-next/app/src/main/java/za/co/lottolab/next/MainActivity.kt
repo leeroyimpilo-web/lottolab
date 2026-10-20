@@ -54,7 +54,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var page by rememberSaveable{mutableStateOf("Home")};var gameId by rememberSaveable{mutableStateOf("lotto")};var details by remember{mutableStateOf<Draw?>(null)}
  val g=Games.get(gameId);val drawer=rememberDrawerState(DrawerValue.Closed);val scope=rememberCoroutineScope();val snackbar=remember{SnackbarHostState()};val context=LocalContext.current
  val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){}
- val pages=listOf("Home","My Tickets","Generate Numbers","Combination Explorer","Ticket Portfolio","Explore Numbers","Draw History","My Spending","Advanced Tools","Syndicates","Results & Sources","Backup & Export","Rules & Help")
+ val pages=listOf("Home","My Tickets","Generate Numbers","Compare Two Numbers","Combination Explorer","Ticket Portfolio","Explore Numbers","Draw History","My Spending","Advanced Tools","Syndicates","Results & Sources","Backup & Export","Rules & Help")
  LaunchedEffect(message){message?.let{snackbar.showSnackbar(it);vm.message.value=null}}
  BackHandler(page!="Home" || details!=null){if(details!=null)details=null else page="Home"}
  ModalNavigationDrawer(drawerState=drawer,drawerContent={ModalDrawerSheet(modifier=Modifier.verticalScroll(rememberScrollState())){
@@ -66,7 +66,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  LazyColumn(Modifier.fillMaxSize().padding(padding),contentPadding=PaddingValues(18.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
   if(busy)item{LinearProgressIndicator(Modifier.fillMaxWidth())}
   if(page!="Home")item{TextButton(onClick={page="Home"}){Icon(Icons.AutoMirrored.Filled.ArrowBack,null);Text(" Home")}}
-  if(page in listOf("Check Ticket","Generate Numbers","Combination Explorer","Explore Numbers","Draw History","Advanced Tools"))item{GamePicker(g){gameId=it}}
+  if(page in listOf("Check Ticket","Generate Numbers","Compare Two Numbers","Combination Explorer","Explore Numbers","Draw History","Advanced Tools"))item{GamePicker(g){gameId=it}}
   when(page){
    "Home"->{
     item{Text("All your results.\nOne clear view.",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold);Text("South Africa • Current game rules",color=Muted,modifier=Modifier.padding(top=6.dp))}
@@ -84,6 +84,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    "Check Ticket"->item{TicketEntry(g,draws,vm)}
    "My Tickets"->item{TicketList(tickets,draws,vm)}
    "Generate Numbers"->item{GeneratePanel(g,vm)}
+   "Compare Two Numbers"->item{NumberComparisonPanel(g,draws)}
    "Combination Explorer"->item{CombinationExplorerPanel(g,draws)}
    "Ticket Portfolio"->item{TicketPortfolioPanel(tickets)}
    "Results & Sources"->item{ResultsCoveragePanel(draws)}
@@ -238,6 +239,19 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  Column(verticalArrangement=Arrangement.spacedBy(12.dp)){
   Text("Make your next lines",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
   Note("Every valid combination has the same jackpot chance. Filters express your preferences; they do not predict a draw.")
+  GeneratorPresetShelf(g,GeneratorSettings(count,locked,excluded,odd,min,max,spread,consecutive,custom)){settings->
+   count=settings.count
+   locked=settings.locked
+   excluded=settings.excluded
+   odd=settings.odd
+   min=settings.sumMin
+   max=settings.sumMax
+   spread=settings.spread
+   consecutive=settings.noConsecutive
+   custom=settings.custom
+   lines=emptyList()
+   error=null
+  }
   Field(count,{count=it},"Number of unique lines • 1–100")
   Field(locked,{locked=it},"Lock favourite numbers • optional")
   Field(excluded,{excluded=it},"Exclude numbers • optional")
