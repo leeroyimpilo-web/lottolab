@@ -22,7 +22,7 @@ class NumberCompareTest {
   assertEquals("2026-10-17",c.first.lastSeen)
   assertEquals(4.0*6/52,c.first.expectedHits,0.00001)
   assertEquals(4.0*6*5/(52.0*51),c.expectedJointHits,0.00001)
-  assertEquals(0.75,c.averageMainOverlap,0.00001)
+  assertEquals(0.75,c.eitherNumberDrawRate,0.00001)
  }
  @Test fun emptyArchiveShowsNoHistoryWithoutClaimingCompleteness() {
   val c=NumberCompare.analyse(emptyList(),"daily-lotto",1,2)
