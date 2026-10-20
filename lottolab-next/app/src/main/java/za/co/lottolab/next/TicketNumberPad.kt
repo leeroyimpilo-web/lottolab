@@ -61,7 +61,7 @@ fun TicketNumberPad(game: Game, onAddLine: (Line) -> Unit) {
 }
 
 @Composable
-private fun TicketNumberGrid(max: Int, selected: Set<Int>, onTap: (Int) -> Unit) {
+fun TicketNumberGrid(max: Int, selected: Set<Int>, onTap: (Int) -> Unit) {
  Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
   (1..max).toList().chunked(7).forEach { row ->
    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
