@@ -44,6 +44,14 @@ Portfolio uniqueness is defined by **game, draw date, all main numbers and Power
 
 The optional ResultsZA Lotto 5 Max API adapter remains **server-side only**, requires valid credentials, and is not connected to the distributed preview by default. Sprint 3 does not claim the Lotto 5 Max archive is complete or officially verified.
 
+## Sprint 4 — Number comparisons, reusable presets and research exports
+
+- **Compare Two Numbers** appears in the side menu and compares two main numbers inside one selected game and rules era. The report shows individual historical appearances, joint appearances, observed dates, and analytically expected appearances under independent draws. Expected values are **averages**, never winning scores or forecasts.
+- **Generator presets** are saved on-device per game in private Android preferences (up to 12 per game) and can be loaded or deleted. They store filter settings, not purchased tickets. A normal application upgrade preserves them, but the current JSON Backup & Export feature **does not include presets**, and uninstalling loses presets without an external device backup.
+- **CSV exports** added to the Number Comparison, Combination Explorer and Ticket Portfolio tools. Reports include honest source/coverage warnings and encode untrusted text defensively to reduce spreadsheet formula risks. Comparison also supports a PDF summary.
+- Android version 1.4.0-preview / versionCode 4. The package name and Room version 1 schema remain unchanged for safe upgrades.
+- Tests cover expected main-ball/pair counts, rule boundaries, CSV report fields and spreadsheet-injection handling.
+
 ## Honest preview limitations / release gates
 
 1. June 2026 rule configuration is based on secondary-source research. Obtain current official signed rule documents, effective draw IDs, claim/cutoff details and cascade conditions before commercial release. No cascade prize is invented.
