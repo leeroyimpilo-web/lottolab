@@ -251,17 +251,63 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
 }
 
 @Composable fun TicketList(tickets:List<Ticket>,draws:List<Draw>,vm:LottoViewModel){
- var purchased by rememberSaveable{mutableStateOf(true)};var receipt by remember{mutableStateOf<Ticket?>(null)};var amount by remember{mutableStateOf("")};var removing by remember{mutableStateOf<Ticket?>(null)}
+ var purchased by rememberSaveable{mutableStateOf(true)}
+ var filter by rememberSaveable{mutableStateOf("All")}
+ var receipt by remember{mutableStateOf<Ticket?>(null)}
+ var amount by remember{mutableStateOf("")}
+ var removing by remember{mutableStateOf<Ticket?>(null)}
+ val byDraw=remember(draws){draws.associateBy{it.game to it.date}}
+ val todayDate=remember{LocalDate.parse(today())}
+ val reviewed=remember(tickets,byDraw,purchased,todayDate) {
+  tickets.filter{it.purchased==purchased}.map{t->
+   t to (if(!t.purchased)null else runCatching {
+    TicketReview.assess(t.game,LocalDate.parse(t.date),t.line(),byDraw[t.game to t.date],todayDate)
+   }.getOrNull())
+  }
+ }
+ val visible=reviewed.filter{(_,assessment)->
+  if(!purchased)true else when(filter){
+   "To check" -> assessment?.state in listOf(TicketState.AWAITING_DRAW,TicketState.RESULT_NOT_LOADED,TicketState.PAYOUT_UNCONFIRMED)
+   "Possible prizes" -> assessment?.state==TicketState.PUBLISHED_PAYOUT
+   "Completed" -> assessment?.state==TicketState.NO_PRIZE
+   else -> true
+  }
+ }
  Column(verticalArrangement=Arrangement.spacedBy(12.dp)){
-  Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){FilterChip(purchased,{purchased=true},label={Text("Purchased")});FilterChip(!purchased,{purchased=false},label={Text("Favourites")})}
-  val selected=tickets.filter{it.purchased==purchased}
-  if(selected.isEmpty())Note(if(purchased)"Purchased tickets will appear here. Use Check Ticket to enter your lines." else "Save lines from the generator or checker to build your favourites.")
-  selected.forEach{t->val g=Games.get(t.game);val draw=draws.find{it.game==t.game && it.date==t.date};val result=runCatching{Checker.check(t.line(),draw)}.getOrNull()
+  Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){FilterChip(purchased,{purchased=true;filter="All"},label={Text("Purchased")});FilterChip(!purchased,{purchased=false;filter="All"},label={Text("Favourites")})}
+  if(purchased) {
+   PeriodPicker(listOf("All","To check","Possible prizes","Completed"),filter){filter=it}
+   val awaiting=reviewed.count{it.second?.state==TicketState.AWAITING_DRAW}
+   val missing=reviewed.count{it.second?.state==TicketState.RESULT_NOT_LOADED}
+   val pending=reviewed.count{it.second?.state==TicketState.PAYOUT_UNCONFIRMED}
+   val prizes=reviewed.count{it.second?.state==TicketState.PUBLISHED_PAYOUT}
+   Panel {
+    Text("Your ticket checks",fontWeight=FontWeight.Bold)
+    Text("$awaiting future entries • $missing results not loaded")
+    Text("$pending awaiting payout details • $prizes possible prizes with published amounts")
+    Text("These are independent checks against provider data, not official ticket validation.",style=MaterialTheme.typography.bodySmall,color=Muted)
+   }
+  }
+  if(visible.isEmpty())Note(if(purchased)"No tickets in this category. Purchased entries appear here after you save or scan them." else "Save your favourite numbers from the generator or checker.")
+  visible.forEach{(t,assessment)->val g=Games.get(t.game)
    Panel{
-    Text(g.title,fontWeight=FontWeight.Bold);Text(if(t.purchased)"Draw ${t.date}" else "Favourite • Not purchased",color=Muted);Balls(t.line().numbers,t.special,Color(g.color))
-    if(t.purchased){Text(result?.status?:"Ticket needs review");result?.let{if(draw!=null)Text("${it.matches} main matches"+(if(it.special)" + special" else ""));it.cents?.let{v->Text("Published: ${money(v)}")}};Text("Cost: ${money(t.costCents)} • Received: ${t.receivedCents?.let(::money)?:"Not recorded"}",style=MaterialTheme.typography.bodySmall);TextButton(onClick={receipt=t;amount=""}){Text("Record money received")}}
-    else Text("Use these numbers in Check Ticket when you purchase a line.",style=MaterialTheme.typography.bodySmall)
-    Row{TextButton(onClick={Exports.share(vm.getApplication(),"${g.title}\n${t.line().display()}\n${if(t.purchased)"Draw ${t.date}" else "Favourite — not purchased"}")}){Text("Share")};TextButton(onClick={removing=t}){Text("Delete")}}
+    Text(g.title,fontWeight=FontWeight.Bold)
+    Text(if(t.purchased)"Draw ${t.date}" else "Favourite • Not purchased",color=Muted)
+    if(t.note.isNotBlank())Text(t.note,color=Muted,style=MaterialTheme.typography.bodySmall)
+    Balls(t.line().numbers,t.special,Color(g.color))
+    if(t.purchased){
+     Text(assessment?.description?:"Ticket needs manual review",fontWeight=FontWeight.Medium,color=Green)
+     assessment?.check?.let{check->
+      Text("${check.matches} main numbers matched"+(if(check.special)" + special ball" else ""))
+      if(check.cents!=null && check.cents>0L)Text("Published provider payout: ${money(check.cents)}",style=MaterialTheme.typography.titleLarge)
+     }
+     Text("Recorded cost: ${money(t.costCents)} • Actually received: ${t.receivedCents?.let(::money)?:"Not recorded"}",style=MaterialTheme.typography.bodySmall)
+     TextButton(onClick={receipt=t;amount=""}){Text("Record money received")}
+    }else Text("Use these numbers in Check Ticket when you purchase a line.",style=MaterialTheme.typography.bodySmall)
+    Row{
+     TextButton(onClick={Exports.share(vm.getApplication(),"${g.title}\n${t.line().display()}\n${if(t.purchased)"Draw ${t.date}" else "Favourite — not purchased"}")}){Text("Share")}
+     TextButton(onClick={removing=t}){Text("Delete")}
+    }
    }
   }
  }
