@@ -85,10 +85,11 @@ object Sync {
     if(old==null && LocalDate.parse(d.date)>=LocalDate.now(ZoneId.of("Africa/Johannesburg")).minusDays(7)){fresh++;dao.alert(Alert(d.id,"New result", "${Games.all.find{it.id==d.game}?.title?:d.game} • ${d.date}"))}
     val revision=if(changed)old!!.revision+1 else old?.revision?:1
     if(old==null || changed)tickets.filter{it.game==d.game && it.date==d.date}.forEach{ticket->
-     val check=runCatching{Checker.check(ticket.line(),d)}.getOrNull()
-     if(check!=null && (check.cents?.let{it>0} != false)){
+     val assessment=runCatching{TicketReview.assess(ticket.game,LocalDate.parse(ticket.date),ticket.line(),d,LocalDate.now(ZoneId.of("Africa/Johannesburg")))}.getOrNull()
+     if(assessment?.state==TicketState.PUBLISHED_PAYOUT || assessment?.state==TicketState.PAYOUT_UNCONFIRMED){
       ticketMatches++
-      dao.alert(Alert("match:${ticket.id}:${d.id}:$revision","Saved ticket match","${Games.get(d.game).title} • ${d.date}: ${check.matches} main matches. ${check.status}. Confirm with the operator."))
+      val label=if(assessment.state==TicketState.PUBLISHED_PAYOUT)"Possible prize on saved ticket" else "Ticket requires payout review"
+      dao.alert(Alert("match:${ticket.id}:${d.id}:$revision",label,"${Games.get(d.game).title} • ${d.date}. ${assessment.description}. Confirm directly with the lottery operator."))
      }
     }
     dao.putDraws(listOf(Store.row(d.copy(revision=revision))))
