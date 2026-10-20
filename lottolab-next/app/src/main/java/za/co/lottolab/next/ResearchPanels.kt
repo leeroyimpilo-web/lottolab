@@ -1,5 +1,7 @@
 package za.co.lottolab.next
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.*
@@ -40,6 +42,12 @@ fun CombinationExplorerPanel(game:Game,draws:List<Draw>) {
   if(chosen.isEmpty()||selectedDraws.isEmpty())null
   else runCatching{CombinationResearch.analyse(selectedDraws,chosen.toList(),activeGame)}.getOrNull()
  }
+ val exportContext=LocalContext.current
+ var csvError by remember(game.id){mutableStateOf<String?>(null)}
+ val exportCsv=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")){uri->
+  if(uri!=null && report!=null)runCatching{Exports.csv(exportContext,uri,ResearchCsv.combination(report))}
+   .onFailure{csvError="CSV export failed: ${it.message}"}
+ }
  Column(verticalArrangement=Arrangement.spacedBy(12.dp)) {
   Text("Number Combination Explorer",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
   Note("See how often your chosen numbers appeared together in the loaded historical draws. This is research, not a prediction.")
@@ -75,6 +83,8 @@ fun CombinationExplorerPanel(game:Game,draws:List<Draw>) {
       (0..chosen.size).reversed().forEach{k->Text("$k of ${chosen.size} numbers: ${r.histogram[k]} draws")}
       Text("0 matches are included to account for all loaded draws.",style=MaterialTheme.typography.bodySmall,color=Muted)
      }
+     OutlinedButton(onClick={exportCsv.launch("LottoLab-Combination-Research.csv")},modifier=Modifier.fillMaxWidth()){Text("Export complete research CSV")}
+     csvError?.let{Text(it,color=MaterialTheme.colorScheme.error)}
      Text("Closest historical draws",fontWeight=FontWeight.Bold)
      if(r.matchingDraws.isEmpty())Note("None of the selected numbers appeared in the loaded draws for this period.")
      r.matchingDraws.take(show).forEach{hit->
@@ -107,6 +117,12 @@ fun TicketPortfolioPanel(tickets:List<Ticket>) {
    }.getOrNull()}
   PortfolioResearch.analyse(selected)
  }
+ val exportContext=LocalContext.current
+ var csvError by remember{mutableStateOf<String?>(null)}
+ val exportCsv=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")){uri->
+  if(uri!=null)runCatching{Exports.csv(exportContext,uri,ResearchCsv.portfolio(report))}
+   .onFailure{csvError="CSV export failed: ${it.message}"}
+ }
  Column(verticalArrangement=Arrangement.spacedBy(12.dp)){
   Text("Ticket Portfolio Analyser",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
   Note("Find repeated number lines and overlaps in your saved tickets. A repeat on a different draw date is not counted as a duplicate.")
@@ -121,6 +137,10 @@ fun TicketPortfolioPanel(tickets:List<Ticket>) {
    Text("${report.duplicateEntries} additional identical entries",fontWeight=FontWeight.SemiBold)
    if(purchased)Text("Recorded cost: ${money(report.costCents)}")
    Text("Two identical purchased lines can represent separate paid entries, but do not cover an additional distinct jackpot combination for that draw.",style=MaterialTheme.typography.bodySmall,color=Muted)
+  }
+  if(report.totalLines>0){
+   OutlinedButton(onClick={exportCsv.launch("LottoLab-Ticket-Portfolio.csv")},modifier=Modifier.fillMaxWidth()){Text("Export portfolio CSV")}
+   csvError?.let{Text(it,color=MaterialTheme.colorScheme.error)}
   }
   if(report.totalLines==0)Note("Save ticket lines first to analyse your portfolio.")
   if(report.duplicates.isNotEmpty()) {
