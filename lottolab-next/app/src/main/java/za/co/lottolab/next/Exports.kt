@@ -11,6 +11,15 @@ object Exports {
   c.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT,text),"Share LottoLab numbers").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
  }
 
+ fun csv(c:Context,uri:Uri,data:String) {
+  require(data.length<=12_000_000){"Report exceeds maximum export size"}
+  val output=c.contentResolver.openOutputStream(uri) ?: error("Cannot write selected file")
+  output.bufferedWriter(Charsets.UTF_8).use{
+   it.write("\uFEFF") // Excel-friendly UTF-8
+   it.write(data)
+  }
+ }
+
  fun pdf(c:Context,uri:Uri,title:String,lines:List<String>) {
   val doc=PdfDocument()
   try {
