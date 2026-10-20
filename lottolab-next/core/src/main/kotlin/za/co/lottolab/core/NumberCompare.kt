@@ -1,7 +1,6 @@
 package za.co.lottolab.core
 
 import java.time.LocalDate
-import kotlin.math.sqrt
 
 /** Descriptive main-ball statistics. They make no prediction about a future draw. */
 data class NumberObservation(
@@ -20,7 +19,7 @@ data class NumberComparison(
  val jointHits:Int,
  val expectedJointHits:Double,
  val jointDates:List<String>,
- val averageMainOverlap:Double
+ val eitherNumberDrawRate:Double
 )
 object NumberCompare {
  fun analyse(draws:List<Draw>,game:String,a:Int,b:Int):NumberComparison {
