@@ -299,7 +299,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
      Text(assessment?.description?:"Ticket needs manual review",fontWeight=FontWeight.Medium,color=Green)
      assessment?.check?.let{check->
       Text("${check.matches} main numbers matched"+(if(check.special)" + special ball" else ""))
-      if(check.cents!=null && check.cents>0L)Text("Published provider payout: ${money(check.cents)}",style=MaterialTheme.typography.titleLarge)
+      check.cents?.takeIf{it>0L}?.let{payout->Text("Published provider payout: ${money(payout)}",style=MaterialTheme.typography.titleLarge)}
      }
      Text("Recorded cost: ${money(t.costCents)} • Actually received: ${t.receivedCents?.let(::money)?:"Not recorded"}",style=MaterialTheme.typography.bodySmall)
      TextButton(onClick={receipt=t;amount=""}){Text("Record money received")}
