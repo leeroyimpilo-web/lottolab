@@ -134,6 +134,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var input by rememberSaveable(g.id){mutableStateOf("")}
  var date by rememberSaveable(g.id){mutableStateOf(today())}
  var purchased by rememberSaveable{mutableStateOf(false)}
+ var drawCount by rememberSaveable(g.id){mutableStateOf("1")}
  var checks by remember{mutableStateOf<List<Pair<Line,Check>>>(emptyList())}
  var error by remember{mutableStateOf<String?>(null)}
  var scanNeedsReview by remember(g.id){mutableStateOf(false)}
@@ -180,10 +181,10 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    onClick={
     runCatching {
      val d=LocalDate.parse(date)
-     require(d>=Rules.cutover){"Use Draw History for dates before the June 2026 rule changes."}
-     require(Rules.forDraw(g.id,d)!=null){"Game not available for this draw date."}
+     val eligible=DrawSchedule.nextDates(g.id,d,if(purchased)drawCount.toInt() else 1)
+     val firstEligible=eligible.first().toString()
      val lines=parseLines(input,g)
-     val draw=draws.find{it.game==g.id && it.date==date}
+     val draw=draws.find{it.game==g.id && it.date==firstEligible}
      checks=lines.map{it to Checker.check(it,draw)}
      error=null
     }.onFailure{error=it.message}
@@ -198,16 +199,21 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    result.cents?.let{if(it>0)Text("Published payout: ${money(it)}",style=MaterialTheme.typography.titleLarge)}
    if(result.matched.isNotEmpty())Text("Matched: ${result.matched.joinToString()}")
   }}
-  Row(verticalAlignment=Alignment.CenterVertically){Checkbox(purchased,{purchased=it});Text("I purchased these lines",Modifier.weight(1f))}
-  Text(if(purchased)"Records ${money(g.priceCents.toLong())} per line for this game. Add-ons require an eligible base-game entry; use the actual receipt as the record of purchase." else "Save as favourites. No spending or winnings recorded.",style=MaterialTheme.typography.bodySmall,color=Muted)
+  Row(verticalAlignment=Alignment.CenterVertically){Checkbox(purchased,{purchased=it;checks=emptyList()});Text("I purchased these lines",Modifier.weight(1f))}
+  if(purchased)Field(drawCount,{drawCount=it;checks=emptyList()},"Number of consecutive draws • 1–10")
+  val schedule=remember(g.id,date,drawCount,purchased){runCatching{DrawSchedule.nextDates(g.id,LocalDate.parse(date),if(purchased)drawCount.toInt() else 1)}.getOrNull()}
+  if(schedule!=null) {
+   val first=schedule.first().toString()
+   val last=schedule.last().toString()
+   Note("Scheduled dates: ${schedule.joinToString(", ")}. ${if(first!=date)"The first eligible draw is $first, not the entered date. " else ""}When saved, each draw is checked separately as results arrive.")
+   if(purchased)Text("Estimated ${schedule.size} draw(s) × ${parsedInput?.size?:0} line(s) × ${money(g.priceCents.toLong())} = ${money(schedule.size.toLong()*(parsedInput?.size?:0)*g.priceCents.toLong())}",style=MaterialTheme.typography.bodyMedium,fontWeight=FontWeight.Medium)
+  }else Note("Enter a valid starting date and a draw count from 1 to 10.")
+  Text(if(purchased)"Each selected draw is recorded separately, with the displayed estimated base price per line. Add-on prices do not include required parent-game entries. Check the actual ticket receipt." else "Save as favourites. No spending or winnings recorded.",style=MaterialTheme.typography.bodySmall,color=Muted)
   OutlinedButton(
-   enabled=!scanNeedsReview,
+   enabled=!scanNeedsReview && schedule!=null,
    onClick={runCatching{
-    val chosenDate=LocalDate.parse(date)
-    require(chosenDate>=Rules.cutover){"Only current-rule tickets can be saved here."}
-    require(Rules.forDraw(g.id,chosenDate)!=null)
     val lines=parseLines(input,g)
-    vm.save(g,lines,date,purchased)
+    vm.saveAcrossDraws(g,lines,date,if(purchased)drawCount.toInt() else 1,purchased)
     error=null
    }.onFailure{error=it.message}},
    modifier=Modifier.fillMaxWidth()
