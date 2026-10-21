@@ -179,6 +179,7 @@ fun ResultsCoveragePanel(draws:List<Draw>) {
   Note("Results are reported by external providers. LottoLab is not the lottery operator and does not independently validate physical tickets or prize claims.")
   Games.all.forEach{g->
    val current=remember(draws,g.id){draws.filter{it.game==g.id && it.date>="2026-06-01"}.sortedByDescending{it.date}}
+   val coverage=remember(draws,g.id){CoverageAudit.inspect(g.id,draws,LocalDate.now(java.time.ZoneId.of("Africa/Johannesburg")))}
    Panel{
     Text(g.title,fontWeight=FontWeight.Bold)
     Text("${current.size} current-rule draws stored on this device")
@@ -191,6 +192,10 @@ fun ResultsCoveragePanel(draws:List<Draw>) {
      Text("Historical coverage begins: ${current.last().date}")
      Text("Latest source: ${latest.source}")
      Text("Prize breakdown records: ${current.count{it.prizes.isNotEmpty()}} of ${current.size}")
+     if(coverage.since!=null){
+      Text("Calendar audit since ${coverage.since}: ${coverage.storedDraws} of ${coverage.expectedDraws} scheduled past draws loaded",style=MaterialTheme.typography.bodySmall)
+      if(coverage.missingDates.isNotEmpty())Text("Missing from local records: ${coverage.missingDates.take(6).joinToString(", ")}${if(coverage.missingDates.size>6)" (+${coverage.missingDates.size-6} more)" else ""}",style=MaterialTheme.typography.bodySmall,color=Muted)
+     }
      Text("Last result retrieval: ${latest.retrievedAt.ifBlank{"Not recorded"}}",style=MaterialTheme.typography.bodySmall,color=Muted)
     }
    }
