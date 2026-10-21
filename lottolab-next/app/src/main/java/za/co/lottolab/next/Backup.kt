@@ -4,13 +4,15 @@ import androidx.room.withTransaction
 import za.co.lottolab.core.*
 import java.time.*
 
-data class BackupBundle(val schema:Int=1,val exportedAt:String=Instant.now().toString(),val tickets:List<Ticket>,val syndicates:List<Syndicate>)
+data class BackupBundle(val schema:Int=2,val exportedAt:String=Instant.now().toString(),val tickets:List<Ticket>,val syndicates:List<Syndicate>,val presets:List<GeneratorPreset>?=null)
 object Backup {
- fun encode(t:List<Ticket>,s:List<Syndicate>)=Store.gson.toJson(BackupBundle(tickets=t,syndicates=s))
+ fun encode(t:List<Ticket>,s:List<Syndicate>,presets:List<GeneratorPreset> = emptyList())=Store.gson.toJson(BackupBundle(tickets=t,syndicates=s,presets=presets))
  suspend fun restore(c:Context,json:String,existingTickets:List<Ticket>,existingGroups:List<Syndicate>):Int {
   require(json.length<=10_000_000){"Backup too large"}
   val b=Store.gson.fromJson(json,BackupBundle::class.java)
-  require(b.schema==1 && b.tickets.size<=20000 && b.syndicates.size<=1000){"Unsupported backup"}
+  require(b!=null && b.schema in 1..2 && b.tickets.size<=20000 && b.syndicates.size<=1000){"Unsupported backup"}
+  val presets=if(b.schema>=2)b.presets.orEmpty() else emptyList()
+  PresetStore.validateBackedUp(presets)
   b.tickets.forEach{t->
    require(t.id.isNotBlank() && t.id.length<=100 && t.note.length<=10000)
    val g=Games.get(t.game);val date=LocalDate.parse(t.date);require(date>=Rules.cutover)
@@ -23,6 +25,7 @@ object Backup {
   val groups=b.syndicates.distinctBy{it.id}.filter{s->existingGroups.none{it.id==s.id}}
   val db=Store.db(c)
   db.withTransaction{tickets.forEach{db.dao().putTicket(it)};groups.forEach{db.dao().putSyndicate(it)}}
-  return tickets.size+groups.size
+  val importedPresets=PresetStore.mergeBackedUp(c,presets)
+  return tickets.size+groups.size+importedPresets
  }
 }
