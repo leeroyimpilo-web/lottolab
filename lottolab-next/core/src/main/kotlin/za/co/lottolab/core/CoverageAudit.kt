@@ -11,12 +11,12 @@ object CoverageAudit {
  fun inspect(gameId:String,draws:List<Draw>,today:LocalDate):CoverageWindow {
   val lastEligible=today.minusDays(1) // a draw on today's calendar date can still be pending
   val saved=draws.filter{it.game==gameId && it.date>=Rules.cutover.toString() && it.date<=lastEligible.toString()}
-  val earliest=saved.minByOrNull{it.date}?.let{LocalDate.parse(it.date)}
-  if(earliest==null) return CoverageWindow(gameId,null,lastEligible,0,0,emptyList())
+  val earliest:LocalDate = saved.minByOrNull{it.date}?.let{LocalDate.parse(it.date)}
+   ?: return CoverageWindow(gameId,null,lastEligible,0,0,emptyList())
   val stored=saved.map{it.date}.toSet()
   val missing=mutableListOf<LocalDate>()
   var expected=0
-  var day=earliest
+  var day:LocalDate=earliest
   while(day<=lastEligible) {
    if(DrawSchedule.isScheduled(gameId,day)){
     expected++
