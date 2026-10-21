@@ -52,6 +52,16 @@ The optional ResultsZA Lotto 5 Max API adapter remains **server-side only**, req
 - Android version 1.4.0-preview / versionCode 4. The package name and Room version 1 schema remain unchanged for safe upgrades.
 - Tests cover expected main-ball/pair counts, rule boundaries, CSV report fields and spreadsheet-injection handling.
 
+## Sprints 5–7 — Offline safety, visual research and data integrity
+
+- **Backup schema v2**: exported JSON includes all local generator presets in addition to tickets/spending and syndicates. v1 backups (without presets) still restore; records and named presets are merged additively. Presets do not require a separate account or internet access.
+- **Visual frequency chart** in Explore Numbers: paged, labelled observed-versus-expected bars for single numbers within a selected game/rules era, with approximate binomial variation bounds. These are descriptions of the downloaded history, not predictions.
+- **Coverage audit** in Results & Sources: identifies missing scheduled result dates from the earliest stored result through yesterday. A game with no stored data is identified as unknown coverage, not assigned a misleading 0% completion score.
+- **Gateway source reconciliation**: contradictory result numbers from different providers are quarantined and cannot silently overwrite stored numbers. Matching third-party sources are tracked as corroboration only. Health endpoint reports quarantines, disagreements and matching third-party source counts; it never claims official verification.
+- **Offline User Guide** explains checking, multi-draws, chart interpretation, receipts, exports, source gaps, and responsible spending.
+- **CI emulator disk fix** reclaims runner storage before boot and lowers AVD data partition size. Android unit tests and lint run as mandatory build steps.
+- Preview version **1.5.0** / versionCode **5**, package ID and Room schema unchanged. This build is still a debug-signed preview.
+
 ## Honest preview limitations / release gates
 
 1. June 2026 rule configuration is based on secondary-source research. Obtain current official signed rule documents, effective draw IDs, claim/cutoff details and cascade conditions before commercial release. No cascade prize is invented.
