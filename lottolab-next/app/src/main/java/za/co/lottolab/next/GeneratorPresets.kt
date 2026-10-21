@@ -35,11 +35,37 @@ object PresetStore {
  }.getOrDefault(emptyList())
  fun list(context:Context,gameId:String):List<GeneratorPreset> =
   all(context).filter{it.gameId==gameId}.sortedBy{it.name.lowercase()}
+ /** Included in explicit user exports. Android private preferences remain offline. */
+ fun exportAll(context:Context):List<GeneratorPreset> = all(context)
+ /**
+  * Validate a backup batch before any persisted change, then merge without
+  * overwriting existing user presets. The caller should have already checked
+  * the backup's schema and size.
+  */
+ fun mergeBackedUp(context:Context,incoming:List<GeneratorPreset>):Int {
+  require(incoming.size<=72){"Too many presets in backup"}
+  incoming.forEach { validate(it.name,Games.get(it.gameId),it.settings) }
+  val existing=all(context)
+  val merged=existing.toMutableList()
+  var added=0
+  for (preset in incoming) {
+   if (merged.any{it.gameId==preset.gameId && it.name.equals(preset.name,ignoreCase=true)}) continue
+   if (merged.count{it.gameId==preset.gameId}>=MAX_PER_GAME) continue
+   merged+=preset
+   added++
+  }
+  if(added>0)persist(context,merged)
+  return added
+ }
+ fun validateBackedUp(incoming:List<GeneratorPreset>) {
+  require(incoming.size<=72){"Too many presets in backup"}
+  incoming.forEach{validate(it.name,Games.get(it.gameId),it.settings)}
+ }
  private fun persist(context:Context,values:List<GeneratorPreset>) {
   val json=Store.gson.toJson(values)
   check(context.getSharedPreferences("lottolab_presets",Context.MODE_PRIVATE).edit().putString(KEY,json).commit()){"Unable to save preset"}
  }
- fun save(context:Context,game:Game,name:String,settings:GeneratorSettings) {
+ private fun validate(name:String,game:Game,settings:GeneratorSettings) {
   val title=name.trim()
   require(title.length in 1..40){"Enter a preset name between 1 and 40 characters"}
   require(title.none{it=='\n'||it=='\r'}){"Preset name must be one line"}
@@ -61,6 +87,10 @@ object PresetStore {
    require(min==null || max==null || min<=max){"Minimum sum exceeds maximum"}
    require(settings.spread.isBlank() || (spread!=null && spread in 0..game.max-1)){"Invalid spread"}
   }
+ }
+ fun save(context:Context,game:Game,name:String,settings:GeneratorSettings) {
+  validate(name,game,settings)
+  val title=name.trim()
   val current=all(context)
   val remaining=current.filterNot{it.gameId==game.id && it.name.equals(title,ignoreCase=true)}
   require(remaining.count{it.gameId==game.id}<MAX_PER_GAME){"Maximum 12 presets per game"}
