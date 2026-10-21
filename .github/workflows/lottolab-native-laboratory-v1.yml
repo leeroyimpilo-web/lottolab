@@ -1,0 +1,47 @@
+name: Build LottoLab Laboratory Android APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [lottolab-native-laboratory-v1]
+    paths:
+      - 'LottoLabNativeBuildBundle.b64.txt'
+      - '.github/workflows/lottolab-native-laboratory-v1.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Extract native Android project
+        run: |
+          base64 -d LottoLabNativeBuildBundle.b64.txt | tar -xJf -
+          test -f native-android/app/src/main/java/za/co/lottolab/MainActivity.kt
+          test -f native-android/app/src/main/res/drawable-nodpi/lottolab_background.webp
+      - name: Use installed Android SDK
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          SDKMANAGER=$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)
+          if [ -n "$SDKMANAGER" ]; then
+            yes | "$SDKMANAGER" --licenses >/dev/null || true
+            "$SDKMANAGER" --install 'platforms;android-35' 'build-tools;35.0.0'
+          fi
+      - name: Compile installable debug APK
+        working-directory: native-android
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+      - name: Upload direct-install APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: LottoLab-Laboratory-Android-APK
+          path: native-android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
