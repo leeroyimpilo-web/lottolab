@@ -20,6 +20,13 @@ jobs:
           gradle-version: '8.11.1'
       - name: Extract Android sources
         run: base64 -d LottoLabNativeBuildBundle.b64.txt | tar -xJf -
+      - name: Fix ARGB accent colours in native Compose rendering
+        run: |
+          SOURCE="native-android/app/src/main/java/za/co/lottolab/MainActivity.kt"
+          grep -q 'Color(game.accent.toULong())' "$SOURCE"
+          sed -i 's/Color(game.accent.toULong())/Color(game.accent.toInt())/g' "$SOURCE"
+          if grep -q 'Color(game.accent.toULong())' "$SOURCE"; then exit 1; fi
+          grep -n 'Color(game.accent.toInt())' "$SOURCE"
       - name: Build APK
         run: cd native-android && gradle --no-daemon :app:assembleDebug
       - name: Boot Android emulator and detect launch crash
@@ -35,6 +42,13 @@ jobs:
             adb logcat -c
             adb shell am start -W -n za.co.lottolab.native/za.co.lottolab.MainActivity || true
             sleep 12
+            if ! adb shell pidof za.co.lottolab.native; then
+              echo '::error::Application process was not running after launch'
+              adb logcat -d -v threadtime | tail -n 250
+              exit 1
+            fi
+            adb shell input tap 120 440
+            sleep 2
             adb logcat -d -v threadtime > startup-log.txt
             adb shell dumpsys activity activities > activity-state.txt || true
             if grep -q -E 'FATAL EXCEPTION|Process: za.co.lottolab.native|Unable to start activity' startup-log.txt; then
