@@ -504,15 +504,15 @@ fun parseMembers(s:String):List<Pair<String,Int>> = s.lines().filter{it.isNotBla
 
 @Composable fun BackupPanel(tickets:List<Ticket>,groups:List<Syndicate>,vm:LottoViewModel){
  val c=LocalContext.current;val scope=rememberCoroutineScope()
- val save=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")){uri->if(uri!=null)scope.launch{runCatching{kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO){c.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use{it.write(Backup.encode(tickets,groups))}?:error("Cannot write backup")};vm.message.value="Backup saved"}.onFailure{vm.message.value=it.message}}}
+ val save=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")){uri->if(uri!=null)scope.launch{runCatching{kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO){c.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use{it.write(Backup.encode(tickets,groups,PresetStore.exportAll(c)))}?:error("Cannot write backup")};vm.message.value="Backup saved"}.onFailure{vm.message.value=it.message}}}
  val restore=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->if(uri!=null)scope.launch{runCatching{val n=kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO){val json=c.contentResolver.openInputStream(uri)?.bufferedReader()?.use{reader->val buffer=CharArray(10000001);var total=0;while(total<buffer.size){val read=reader.read(buffer,total,buffer.size-total);if(read<0)break;total+=read};require(total<=10000000){"Backup too large"};String(buffer,0,total)}?:error("Cannot read backup");Backup.restore(c,json,tickets,groups)};vm.message.value="$n new records restored"}.onFailure{vm.message.value="Backup not imported: ${it.message}"}}}
  val pdf=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")){uri->if(uri!=null)runCatching{Exports.pdf(c,uri,"Saved ticket register",tickets.flatMap{listOf("${Games.get(it.game).title} | ${it.date} | ${if(it.purchased)"Purchased" else "Favourite"}",it.line().display(),"Cost ${money(it.costCents)} | Received ${it.receivedCents?.let(::money)?:"not recorded"}","")})}.onFailure{vm.message.value=it.message}}
  Column(verticalArrangement=Arrangement.spacedBy(12.dp)){
   Text("Keep a copy of your records",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
-  Note("A backup contains your tickets, spending records and syndicate member names. Keep it somewhere private. Restoring adds new records and leaves existing IDs unchanged.")
+  Note("Backup v2 includes purchased and favourite tickets, spending, syndicate names and generator presets. It contains private information. Store it securely. Older LottoLab v1 backups are also supported. Restore adds missing records without overwriting saved IDs or presets.")
   Button(onClick={save.launch("LottoLab-Backup-${today()}.json")},modifier=Modifier.fillMaxWidth()){Text("Save restorable backup")}
   OutlinedButton(onClick={restore.launch(arrayOf("application/json","text/plain"))},modifier=Modifier.fillMaxWidth()){Text("Restore backup")}
   OutlinedButton(onClick={pdf.launch("LottoLab-Tickets-${today()}.pdf")},modifier=Modifier.fillMaxWidth()){Text("Export ticket register PDF")}
-  Text("${tickets.size} ticket lines • ${groups.size} syndicates",color=Muted)
+  Text("${tickets.size} ticket lines • ${groups.size} syndicates • ${PresetStore.exportAll(c).size} presets",color=Muted)
  }
 }
