@@ -391,14 +391,18 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    PeriodPicker(listOf("All","20","50","100"),window){window=it}
    Text("${selected.size} draws • ${selected.lastOrNull()?.date?:"—"} to ${selected.firstOrNull()?.date?:"—"}",style=MaterialTheme.typography.bodySmall,color=Muted)
    Note(if(selected.size<100)"Small sample: ${selected.size} draws. Rankings, especially pairs and triples, can change sharply. Past draws do not predict the next result." else "Historical observations only. Every valid combination keeps the same next-draw jackpot probability.")
-   PeriodPicker(listOf("Frequency","Gaps","Pairs","Triples","My numbers","Patterns","Heatmap"),tab){tab=it}
+   PeriodPicker(listOf("Frequency","Chart","Gaps","Pairs","Triples","My numbers","Patterns","Heatmap"),tab){tab=it}
    if(tab=="Frequency" || tab=="Gaps"){
     if(r.specialMax>0)Row(verticalAlignment=Alignment.CenterVertically){Switch(special,{special=it});Text("  PowerBall only")}
     else if(special)LaunchedEffect(Unit){special=false}
     val sorted=if(tab=="Gaps")stats.sortedByDescending{it.gap}else stats.sortedByDescending{it.hits}
     sorted.forEach{s->Surface(onClick={selectedNumber=s},color=Color.White,shape=RoundedCornerShape(10.dp)){Row(Modifier.padding(12.dp),verticalAlignment=Alignment.CenterVertically){Text(s.number.toString().padStart(2,'0'),fontWeight=FontWeight.Bold,modifier=Modifier.width(35.dp));Column(Modifier.weight(1f)){Text(if(tab=="Gaps")"${s.gap} draws since seen" else "${s.hits} appearances • ${String.format(Locale.US,"%.1f",s.rate)}%",style=MaterialTheme.typography.bodySmall);if(tab=="Frequency")LinearProgressIndicator(progress={if(selected.isEmpty())0f else s.hits.toFloat()/selected.size},modifier=Modifier.fillMaxWidth().padding(top=5.dp),color=Color(g.color))};Icon(Icons.Default.ChevronRight,null,tint=Muted)}}}
    }
-   if(tab=="Pairs" || tab=="Triples"){
+   if(tab=="Chart"){
+     if(r.specialMax>0)Row(verticalAlignment=Alignment.CenterVertically){Switch(special,{special=it});Text("  PowerBall numbers")}
+     FrequencyChart(g,stats,selected.size,if(special && r.specialMax>0)1 else r.count,if(special && r.specialMax>0)r.specialMax else r.max)
+    }
+    if(tab=="Pairs" || tab=="Triples"){
     val groups=remember(selected,tab){Stats.groups(selected,if(tab=="Pairs")2 else 3)}
     groups.take(30).forEach{entry->Panel{Text(entry.key.joinToString(" • "),fontWeight=FontWeight.Bold);Text("${entry.value} of ${selected.size} draws")}}
     if(groups.isEmpty())Note("No records in this period.")
