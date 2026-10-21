@@ -22,7 +22,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
-      - name: Reuse preview signing identity
+      - name: Restore best-effort debug signing key cache
         uses: actions/cache@v4
         with:
           path: ~/.android/debug.keystore
@@ -37,6 +37,16 @@ jobs:
       - name: Test and build fresh native project
         working-directory: lottolab-next
         run: gradle --no-daemon :core:test :app:testDebugUnitTest :app:assembleDebug :app:lintDebug
+      - name: Report preview signing identity
+        if: always()
+        run: |
+          echo '### Preview APK signing' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Debug signing is not a stable production identity. Existing previews with a different certificate cannot be upgraded in place.' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f "$HOME/.android/debug.keystore" ]; then
+            keytool -list -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey 2>/dev/null | grep 'SHA256:' >> "$GITHUB_STEP_SUMMARY" || true
+          else
+            echo 'No default debug keystore was found at expected path.' >> "$GITHUB_STEP_SUMMARY"
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
