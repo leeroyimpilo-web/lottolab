@@ -49,7 +49,7 @@ The optional ResultsZA Lotto 5 Max API adapter remains **server-side only**, req
 - **Compare Two Numbers** appears in the side menu and compares two main numbers inside one selected game and rules era. The report shows individual historical appearances, joint appearances, observed dates, and analytically expected appearances under independent draws. Expected values are **averages**, never winning scores or forecasts.
 - **Generator presets** are saved on-device per game in private Android preferences (up to 12 per game) and can be loaded or deleted. They store filter settings, not purchased tickets. A normal application upgrade preserves them, but the current JSON Backup & Export feature **does not include presets**, and uninstalling loses presets without an external device backup.
 - **CSV exports** added to the Number Comparison, Combination Explorer and Ticket Portfolio tools. Reports include honest source/coverage warnings and encode untrusted text defensively to reduce spreadsheet formula risks. Comparison also supports a PDF summary.
-- Android version 1.4.0-preview / versionCode 4. The package name and Room version 1 schema remain unchanged for safe upgrades.
+- Android version 1.4.0-preview / versionCode 4. The package name and Room version 1 schema remain unchanged; **in-place Android upgrades also require the same APK signing certificate**, which GitHub's temporary preview debug key has not reliably preserved. Export a backup before replacing a preview.
 - Tests cover expected main-ball/pair counts, rule boundaries, CSV report fields and spreadsheet-injection handling.
 
 ## Sprints 5–7 — Offline safety, visual research and data integrity
@@ -60,7 +60,17 @@ The optional ResultsZA Lotto 5 Max API adapter remains **server-side only**, req
 - **Gateway source reconciliation**: contradictory result numbers from different providers are quarantined and cannot silently overwrite stored numbers. Matching third-party sources are tracked as corroboration only. Health endpoint reports quarantines, disagreements and matching third-party source counts; it never claims official verification.
 - **Offline User Guide** explains checking, multi-draws, chart interpretation, receipts, exports, source gaps, and responsible spending.
 - **CI emulator disk fix** reclaims runner storage before boot and lowers AVD data partition size. Android unit tests and lint run as mandatory build steps.
-- Preview version **1.5.0** / versionCode **5**, package ID and Room schema unchanged. This build is still a debug-signed preview.
+- Preview version **1.5.0** / versionCode **5**, package ID and Room schema unchanged. **Debug certificates from previous preview builds may differ**, so an in-place update is not guaranteed; back up your data and reinstall only if needed. This build is still a debug-signed preview.
+
+## Installing this debug preview safely
+
+Debug signing certificate continuity is **not guaranteed** by the current GitHub Actions cache. Inspection of prior preview APKs found different signer fingerprints. Keeping `za.co.lottolab.next` unchanged does **not** fix a signature mismatch. Android will reject an update with `INSTALL_FAILED_UPDATE_INCOMPATIBLE` if the installed version was signed by another key.
+
+1. In your existing LottoLab Next installation, open **Backup & Export** and save a JSON backup to a known location outside the app's private storage (e.g. Downloads). Confirm the file exists and is non-empty.
+2. Try installing the new preview directly. If Android refuses due to a conflicting package/signature, keep the old app until you have safely checked the backup.
+3. Only after confirming the backup, uninstall the old preview and install the new APK. Uninstalling deletes local database and private presets on that installation.
+4. Use **Backup & Export → Restore backup** to recover tickets, groups, and presets (v2); legacy v1 backups restore tickets/groups.
+5. Do not release commercially until a **single persistent private production signing key** is provisioned securely and retained for future upgrades.
 
 ## Honest preview limitations / release gates
 
