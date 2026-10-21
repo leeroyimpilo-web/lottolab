@@ -54,7 +54,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
  var page by rememberSaveable{mutableStateOf("Home")};var gameId by rememberSaveable{mutableStateOf("lotto")};var details by remember{mutableStateOf<Draw?>(null)}
  val g=Games.get(gameId);val drawer=rememberDrawerState(DrawerValue.Closed);val scope=rememberCoroutineScope();val snackbar=remember{SnackbarHostState()};val context=LocalContext.current
  val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){}
- val pages=listOf("Home","My Tickets","Generate Numbers","Compare Two Numbers","Combination Explorer","Ticket Portfolio","Explore Numbers","Draw History","My Spending","Advanced Tools","Syndicates","Results & Sources","Backup & Export","Rules & Help")
+ val pages=listOf("Home","My Tickets","Generate Numbers","Compare Two Numbers","Combination Explorer","Ticket Portfolio","Explore Numbers","Draw History","My Spending","Advanced Tools","Syndicates","Results & Sources","Backup & Export","User Guide","Rules & Help")
  LaunchedEffect(message){message?.let{snackbar.showSnackbar(it);vm.message.value=null}}
  BackHandler(page!="Home" || details!=null){if(details!=null)details=null else page="Home"}
  ModalNavigationDrawer(drawerState=drawer,drawerContent={ModalDrawerSheet(modifier=Modifier.verticalScroll(rememberScrollState())){
@@ -94,6 +94,7 @@ class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:
    "Advanced Tools"->item{WheelPanel(g,vm)}
    "Syndicates"->item{SyndicatePanel(syndicates,vm)}
    "Backup & Export"->item{BackupPanel(tickets,syndicates,vm)}
+   "User Guide"->item{GuidePanel()}
    "Rules & Help"->item{RulesPanel()}
    "Notifications"->item{Column(verticalArrangement=Arrangement.spacedBy(12.dp)){
     Text("Results and corrections",style=MaterialTheme.typography.titleLarge)
