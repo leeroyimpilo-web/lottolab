@@ -1,0 +1,59 @@
+name: LottoLab Laboratory Startup Test
+on:
+  push:
+    branches: [lottolab-laboratory-crashfix]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  emulator-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Extract Android sources
+        run: base64 -d LottoLabNativeBuildBundle.b64.txt | tar -xJf -
+      - name: Build APK
+        run: cd native-android && gradle --no-daemon :app:assembleDebug
+      - name: Boot Android emulator and detect launch crash
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-boot-timeout: 900
+          script: |
+            adb install -r native-android/app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
+            adb shell am start -W -n za.co.lottolab.native/za.co.lottolab.MainActivity || true
+            sleep 12
+            adb logcat -d -v threadtime > startup-log.txt
+            adb shell dumpsys activity activities > activity-state.txt || true
+            if grep -q -E 'FATAL EXCEPTION|Process: za.co.lottolab.native|Unable to start activity' startup-log.txt; then
+              grep -A 65 -B 8 -E 'FATAL EXCEPTION|Unable to start activity' startup-log.txt | tail -n 130
+              exit 1
+            fi
+            echo 'Android emulator launch passed'
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: LottoLab-startup-diagnostics
+          path: |
+            startup-log.txt
+            activity-state.txt
+          if-no-files-found: ignore
+      - name: Upload installable APK
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: LottoLab-Laboratory-Crashfix-APK
+          path: native-android/app/build/outputs/apk/debug/app-debug.apk
