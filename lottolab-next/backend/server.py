@@ -80,12 +80,35 @@ def ingest(rows,payouts,source='BetTip'):
             try:
                 row=validate(item);row['provider']=source;key=row['game']+':'+row['date']
                 if key in blocked:raise ValueError('Conflicting duplicate in feed')
-                body=json.dumps(row,sort_keys=True)
                 old=con.execute('SELECT body,revision FROM draws WHERE id=?',(key,)).fetchone()
                 revision=1 if not old else old[1]
-                if old and old[0]!=body:
-                    con.execute('INSERT INTO revisions(draw_id,body,changed) VALUES(?,?,?)',(key,old[0],now));revision+=1
-                con.execute('INSERT OR REPLACE INTO draws VALUES(?,?,?,?,?,?)',(key,row['game'],row['date'],body,now,revision));accepted+=1
+                if old:
+                    previous=json.loads(old[0])
+                    prior_ball_signature=(previous['numbers'],previous.get('bonusBall'))
+                    proposed_ball_signature=(row['numbers'],row.get('bonusBall'))
+                    prior_source=previous.get('provider',source)
+                    if prior_ball_signature!=proposed_ball_signature and prior_source!=source:
+                        # Never silently replace one provider's numbers with another
+                        # provider's contradictory results.
+                        raise ValueError('Cross-source draw mismatch; existing result retained')
+                    if prior_ball_signature!=proposed_ball_signature:
+                        con.execute('INSERT INTO revisions(draw_id,body,changed) VALUES(?,?,?)',(key,old[0],now))
+                        revision+=1
+                    else:
+                        # A second agreeing provider is useful corroboration, not
+                        # independent official verification or a result revision.
+                        if prior_source!=source:
+                            row['provider']=prior_source
+                            row['corroboratingSources']=sorted(set(
+                                previous.get('corroboratingSources',[])+[source]))
+                            row['verificationStatus']='third-party-sources-agree'
+                        else:
+                            row['corroboratingSources']=previous.get('corroboratingSources',[])
+                            if row['corroboratingSources']:
+                                row['verificationStatus']='third-party-sources-agree'
+                body=json.dumps(row,sort_keys=True)
+                con.execute('INSERT OR REPLACE INTO draws VALUES(?,?,?,?,?,?)',
+                            (key,row['game'],row['date'],body,now,revision));accepted+=1
             except (ValueError,KeyError,TypeError) as error:
                 con.execute('INSERT INTO quarantine(body,reason,observed) VALUES(?,?,?)',(json.dumps(item),str(error),now));rejected+=1
         for p in payouts:
@@ -124,7 +147,13 @@ def refresh(full=True):
 def payload(resource,since=''):
     with connect() as con:
         if resource=='health':
-            return {'draws':con.execute('SELECT COUNT(*) FROM draws').fetchone()[0],'latestByGame':dict(con.execute('SELECT game,MAX(date) FROM draws GROUP BY game')),'lastSync':con.execute('SELECT at,status FROM sync_log ORDER BY id DESC LIMIT 1').fetchone(),'officialVerification':False}
+            return {'draws':con.execute('SELECT COUNT(*) FROM draws').fetchone()[0],
+                    'latestByGame':dict(con.execute('SELECT game,MAX(date) FROM draws GROUP BY game')),
+                    'lastSync':con.execute('SELECT at,status FROM sync_log ORDER BY id DESC LIMIT 1').fetchone(),
+                    'quarantinedRecords':con.execute('SELECT COUNT(*) FROM quarantine').fetchone()[0],
+                    'crossSourceMismatches':con.execute("SELECT COUNT(*) FROM quarantine WHERE reason LIKE '%Cross-source draw mismatch%'").fetchone()[0],
+                    'thirdPartyAgreementDraws':con.execute("SELECT COUNT(*) FROM draws WHERE body LIKE '%third-party-sources-agree%'").fetchone()[0],
+                    'officialVerification':False}
         if resource=='payouts':data=[json.loads(x[0]) for x in con.execute('SELECT body FROM payouts')]
         else:
             rows=[json.loads(x[0]) for x in con.execute('SELECT body FROM draws WHERE updated>=? ORDER BY date',(since,))]
