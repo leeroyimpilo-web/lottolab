@@ -12,8 +12,8 @@ android {
   minSdk = 26
   targetSdk = 35
   buildConfigField("String", "FEED_BASE_URL", "\"${providers.gradleProperty("feedBaseUrl").getOrElse("https://bettip.co.za/api/v1/lotto/")}\"")
-  versionCode = 4
-  versionName = "1.4.0-preview"
+  versionCode = 5
+  versionName = "1.5.0-preview"
   testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
  }
  buildFeatures { compose = true; buildConfig = true }
