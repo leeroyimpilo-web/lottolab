@@ -1,0 +1,8 @@
+/* Only the isolated UI-preview path bypasses the legacy shell visually.
+   Existing LottoLab routes and app providers remain untouched. */
+body:has(.ll-preview) .min-h-dvh:has(.ll-preview) > :not(main) { display:none!important; }
+body:has(.ll-preview) .min-h-dvh:has(.ll-preview) > main {
+  display:block!important; max-width:none!important; margin:0!important;
+  padding:0!important; width:100%!important;
+}
+body:has(.ll-preview){overflow-x:hidden;background:#e3ecef}
