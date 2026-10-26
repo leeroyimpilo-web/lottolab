@@ -68,6 +68,15 @@ try {
  assert(await page.getByText("November 2026",{exact:true}).isVisible(),"Calendar must show the next month");
  assert(await page.getByText("No sample events this month",{exact:true}).isVisible(),"October-only sample events must not persist in other months");
  await page.goto(galleryURL,{waitUntil:"networkidle"});
+ await page.getByRole("button",{name:/C07 · Check my numbers/}).click();
+ assert(!(await page.getByRole("button",{name:"Preview comparison"}).isEnabled()),"Comparison must reject incomplete board");
+ await page.getByRole("button",{name:/Choose your numbers/}).click();
+ for(const n of [1,2,3,4,5,6])await page.getByRole("button",{name:"Number "+n,exact:true}).click();
+ await page.getByRole("button",{name:"Confirm",exact:true}).click();
+ assert(await page.getByRole("button",{name:"Preview comparison"}).isEnabled(),"Complete board enables comparison preview");
+ await page.getByRole("button",{name:"Preview comparison"}).click();
+ assert(await page.getByText("Example board · not your input",{exact:true}).isVisible(),"Comparison must label static board fixture");
+ await page.goto(galleryURL,{waitUntil:"networkidle"});
  await page.getByRole("button",{name:/C06 · Draw details/}).click();
  assert((await page.getByRole("button",{name:"Open app menu"}).count())===0,"Floating menu must not obstruct prize table");
  assert(await page.locator(".ll-prize-unknown").getByText("N/A",{exact:true}).isVisible(),"Unknown payout winner count should use compact N/A state");
