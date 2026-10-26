@@ -98,6 +98,48 @@ try {
  await page.getByRole("button",{name:/C20 · Settings/}).click();
  await page.getByLabel("Large text preview").check();
  await page.screenshot({path:target+"/settings-large-text.png",fullPage:true});
+ // Validate meaningful tool-specific UI instead of unrelated generic dropdowns.
+ await page.goto(galleryURL,{waitUntil:"networkidle"});
+ await page.getByRole("button",{name:/T01 · Number frequencies/}).click();
+ const sortBy=page.getByRole("combobox",{name:"Sort by"});
+ assert(await sortBy.isVisible(),"Frequency sort control missing");
+ assert(await sortBy.locator("option",{hasText:"Most frequent"}).count()===1,"Frequency sort contains unrelated choices");
+ await page.getByRole("button",{name:/View sample result/}).click();
+ const pct=await page.locator(".ll-mini-bar-track > div").first().evaluate(el=>
+   100*el.getBoundingClientRect().width/(el.parentElement?.getBoundingClientRect().width||1));
+ assert(Math.abs(pct-18)<2,"First frequency bar must represent 18% of 100 example draws, got "+pct);
+ await page.getByRole("button",{name:"Save preview"}).click();
+ assert(await page.getByRole("heading",{name:"Save research preview"}).isVisible(),"Research result must not open board-save sheet");
+ await page.getByRole("button",{name:"Save sample research"}).click();
+ assert(await page.getByRole("heading",{name:"Research preview marked saved"}).isVisible(),"Research example save acknowledgment missing");
+ await page.goto(galleryURL,{waitUntil:"networkidle"});
+ await page.getByRole("button",{name:/T05 · Pairs & triplets/}).click();
+ assert(await page.getByRole("combobox",{name:"Pairs / triplets"}).locator("option",{hasText:"Triplets"}).count()===1,"Triplet selector missing");
+ await page.goto(galleryURL,{waitUntil:"networkidle"});
+ await page.getByRole("button",{name:/T10 · Combination count/}).click();
+ const poolSize=page.locator(".ll-field").filter({hasText:"Pool size"}).locator(".ll-stepper strong");
+ assert((await poolSize.textContent())==="52","Combination-count pool size should reflect the chosen 1–52 format");
+ await page.getByRole("button",{name:"Increase Pool size"}).click();
+ assert((await poolSize.textContent())==="53","Pool size stepper must not be artificially capped at 10");
+ await page.goto(galleryURL,{waitUntil:"networkidle"});
+ await page.getByRole("button",{name:/C11 · Edit boards/}).click();
+ assert(!(await page.getByRole("button",{name:"Save preview"}).isEnabled()),"Board save must not work for incomplete selection");
+ await page.getByRole("button",{name:/Select your numbers/}).click();
+ for(const n of [1,2,3,4,5,6])await page.getByRole("button",{name:"Number "+n,exact:true}).click();
+ await page.getByRole("button",{name:"Confirm",exact:true}).click();
+ await page.getByRole("button",{name:"Save preview"}).click();
+ assert(await page.getByRole("heading",{name:"Save board preview"}).isVisible(),"Board save sheet missing");
+ await page.getByRole("textbox",{name:"Board name"}).fill("QA example board");
+ await page.getByRole("button",{name:"Save sample board"}).click();
+ await page.getByRole("button",{name:"View my boards"}).click();
+ await page.getByRole("button",{name:/QA example board/}).click();
+ await page.getByRole("button",{name:/Edit this board/}).click();
+ await page.getByRole("button",{name:"Save preview"}).click();
+ assert(await page.getByRole("heading",{name:"Update example board"}).isVisible(),"Editing must update, not duplicate a board");
+ assert(await page.getByRole("button",{name:"Update sample board"}).isEnabled(),"Existing name should be allowed during editing");
+ await page.getByRole("button",{name:"Update sample board"}).click();
+ await page.getByRole("button",{name:"View my boards"}).click();
+ assert((await page.getByRole("button",{name:/QA example board/}).count())===1,"Editing generated a duplicate example board");
  assert(errors.length===0,"Browser errors: "+errors.join(" | "));
  console.log("PASS: "+summary.length+" routes, all 17 sample tool output views, 10 result states and mobile 360/390/412 screen atlas. Picker, menu, calendar and board input flow verified.");
 } finally { await browser.close(); }
