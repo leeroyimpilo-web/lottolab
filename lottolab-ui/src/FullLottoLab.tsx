@@ -193,10 +193,12 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
       <RowLink title="Use an example saved board" sub={activeBoard.name} onClick={()=>{setGameId(activeBoard.gameId);setSelected(activeBoard.main);setSpecial(activeBoard.special)}} icon={<Layers3 size={19}/>}/></>;
   }
   function comparison(){
-    const sampleMain=selected.length===game.pick?selected:game.numbers;
-    return <><div className="ll-card">{section("Example comparison")}<InfoPair label="Game" value={game.label}/><InfoPair label="Draw" value="DEMO-001 · not official"/><p className="ll-kicker ll-top-gap">Winning example</p><BoardBalls numbers={game.numbers} game={game} special={game.special}/><p className="ll-kicker ll-top-gap">Your board</p><BoardBalls numbers={sampleMain} game={game} special={special}/>
-      <div className="ll-stats-grid ll-top-gap"><div className="ll-stat"><span>Match illustration</span><strong>3 numbers</strong><small>Not computed from inputs</small></div><div className="ll-stat"><span>Winnings</span><strong>Unavailable</strong><small>No prize checking connected</small></div></div></div>
-      <div className="ll-warning-inline"><strong>Not a genuine ticket check</strong><p>The highlights and match count are static layout examples, not a calculation of your selection. Do not rely on them to claim a prize.</p></div>
+    const exampleOtherNumbers=Array.from({length:game.pool},(_,i)=>i+1).filter(n=>!game.numbers.includes(n));
+    const sampleMain=[...game.numbers.slice(0,3),...exampleOtherNumbers.slice(0,game.pick-3)].sort((a,b)=>a-b);
+    const sampleSpecial=game.specialPool?(game.special===1?2:1):undefined;
+    return <><div className="ll-card">{section("Example comparison")}<InfoPair label="Game" value={game.label}/><InfoPair label="Draw" value="DEMO-001 · not official"/><p className="ll-kicker ll-top-gap">Winning example</p><BoardBalls numbers={game.numbers} game={game} special={game.special}/><p className="ll-kicker ll-top-gap">Example board · not your input</p><BoardBalls numbers={sampleMain} game={game} special={sampleSpecial}/>
+      <div className="ll-stats-grid ll-top-gap"><div className="ll-stat"><span>Match illustration</span><strong>3 main balls</strong><small>Fixture example only</small></div><div className="ll-stat"><span>Winnings</span><strong>Unavailable</strong><small>No prize checking connected</small></div></div></div>
+      <div className="ll-warning-inline"><strong>Not a genuine ticket check</strong><p>This is a fixed illustration showing three matching main balls. Your selected numbers are not checked, and no prize is determined. Do not use this preview to claim a win.</p></div>
       <Pill onClick={()=>next("C07")}>Change my board</Pill><div className="ll-vspace"/><Pill variant="outline" onClick={()=>openSave("C08")}>Save board preview</Pill></>;
   }
   function boardList(){
@@ -249,10 +251,10 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
     const slotCount=Math.ceil((firstDay+daysInMonth)/7)*7;
     const monthLabel=new Intl.DateTimeFormat("en-ZA",{month:"long",year:"numeric"}).format(monthDate);
     return <><div className="ll-card">{section("Draw calendar","Examples")}
-      <div className="ll-card-row ll-calendar-head"><button type="button" onClick={()=>setMonthOffset(x=>x-1)} aria-label="Previous month">‹</button><strong>{monthLabel}</strong><button type="button" onClick={()=>setMonthOffset(x=>x+1)} aria-label="Next month">›</button></div>
+      <div className="ll-card-row ll-calendar-head"><button type="button" onClick={()=>{setMonthOffset(x=>x-1);setSelectedTab("Day 1")}} aria-label="Previous month">‹</button><strong>{monthLabel}</strong><button type="button" onClick={()=>{setMonthOffset(x=>x+1);setSelectedTab("Day 1")}} aria-label="Next month">›</button></div>
       <div className="ll-calendar-grid">{days.map((n,i)=><strong key={i}>{n}</strong>)}{Array.from({length:slotCount},(_,i)=>{const day=i-firstDay+1;return <button type="button" key={i} disabled={day<1||day>daysInMonth} className={day===26&&monthOffset===0?"selected":""} onClick={()=>setSelectedTab("Day "+day)}>{day>=1&&day<=daysInMonth?day:""}</button>})}</div>
       <p className="ll-subheading">Selected: {selectedTab.startsWith("Day")?selectedTab:"Day 26"} · Event examples only</p></div>
-      <div className="ll-list-group ll-block-gap">{sampleCalendar.map((x,i)=><RowLink key={i} title={x.name} sub={"Example event · "+x.day+" October (not a verified schedule)"} onClick={()=>next("C04")}/>)}</div>
+      {monthOffset===0?<div className="ll-list-group ll-block-gap">{sampleCalendar.map((x,i)=><RowLink key={i} title={x.name} sub={"Example event · "+x.day+" October (not a verified schedule)"} onClick={()=>next("C04")}/>)}</div>:<div className="ll-empty-state"><CalendarDays size={27}/><h3>No sample events this month</h3><p>Only October 2026 has invented calendar events in this design prototype.</p></div>}
       <p className="ll-footnote">Real draw dates and provider cutoffs must be verified separately and cannot be inferred from this example calendar.</p></>;
   }
   function notifications(){
@@ -408,7 +410,7 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
       <div className="ll-two-actions"><Pill variant="outline" onClick={()=>setSheet(null)}>Cancel</Pill><Pill onClick={()=>{if(confirmAction==="delete")setBoards(p=>p.filter(b=>b.id!==boardId));else{setSelected([]);setSpecial(undefined);}setSheet(null);next("C09")}}>Confirm</Pill></div></div>;
     return null;
   }
-  const showNav=view!=="GALLERY"&&view!=="C27"&&!sheet;
+  const showNav=(["C01","C03","C05","C07","C09","C15","C16","C18","C20","C22","LAB"] as Route[]).includes(view)&&!sheet;
   const screenTitle=view==="LAB"?"LottoLab":view==="GALLERY"?"UI screen gallery":isTool(view)?screenTitles[view]:screenTitles[view]||"LottoLab";
   return <div className={"ll-preview ll-full"+(pref.largeText?" ll-text-large":"")}>
     {view!=="C01"&&!isTool(view)&&<PageTitle title={screenTitle} back={back} aside={view==="LAB"?<button type="button" className="ll-icon-button" onClick={()=>next("C18")} aria-label="Help"><HelpCircle size={21}/></button>:undefined}/>}
