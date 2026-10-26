@@ -32,3 +32,7 @@ Sprint 1 fidelity anchors are available at /ui-preview/gallery (development rout
 Keep design changes in lottolab-ui/ and app/ui-preview/ until the complete visual review. No new APIs, database, statistics, auth, payments, notifications, real exports, or Android APK until explicitly scheduled and approved. The preview route uses CSS to hide the old app's surrounding navigation only on /ui-preview; no existing source screens were modified.
 
 See the master prompt's Sprint 0–11 sequence. Current focus: Sprint 1 verification, then Sprint 2 screen completion.
+
+## Standalone Android UI-preview build
+
+From `lottolab-ui/`, run `npm install`, `npm run typecheck`, `npm run build`, `npx cap add android`, and `npx cap sync android`, followed by Android Gradle `assembleDebug`. The GitHub Actions workflow `lottolab-ui-android.yml` builds and uploads the debug APK. The UI project deliberately uses its own npm dependency installation, distinct from the root pnpm workspace.

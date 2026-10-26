@@ -20,34 +20,27 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 12.3.4
-          run_install: false
       - name: Set up Node 22
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
       - name: Install independent UI dependencies
         working-directory: lottolab-ui
-        run: pnpm install --no-frozen-lockfile
+        run: npm install --no-audit --no-fund
       - name: Typecheck standalone Android UI
         working-directory: lottolab-ui
-        run: pnpm run typecheck
+        run: npm run typecheck
       - name: Bundle offline UI
         working-directory: lottolab-ui
-        run: pnpm run build
+        run: npm run build
       - name: Confirm bundled entry point
         working-directory: lottolab-ui
         run: test -s dist/index.html
       - name: Generate Android WebView project
         working-directory: lottolab-ui
         run: |
-          pnpm exec cap add android
-          pnpm exec cap sync android
+          npx cap add android
+          npx cap sync android
       - name: Install Android platform
         run: |
           SDK_ROOT="$ANDROID_HOME"
