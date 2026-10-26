@@ -35,7 +35,7 @@ try {
  assert(await page.getByText("Latest results",{exact:true}).isVisible(),"Home has no results");
  await page.getByRole("button",{name:"Open app menu"}).click();
  assert(await page.getByRole("navigation",{name:"Global menu"}).isVisible(),"Global menu not reachable");
- await page.getByRole("button",{name:/LottoLab Research and plan/}).click();
+ await page.getByRole("navigation",{name:"Global menu"}).getByRole("button",{name:/LottoLab Research and plan/}).click();
  assert(await page.getByRole("heading",{name:"LottoLab"}).count()>0,"LottoLab hub not reachable");
  await page.getByRole("button",{name:/Number frequencies How often/}).first().click();
  await page.getByRole("button",{name:/View sample result/}).click();
