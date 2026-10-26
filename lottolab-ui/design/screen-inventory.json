@@ -1,0 +1,244 @@
+{
+  "status": "planned, not implemented",
+  "core": [
+    [
+      "C01",
+      "Home",
+      "Results cards, shortcuts, status, menu"
+    ],
+    [
+      "C02",
+      "Global menu",
+      "Ordered destinations, active state, close"
+    ],
+    [
+      "C03",
+      "Games catalogue",
+      "Ticket-style game cards and rule-era labels"
+    ],
+    [
+      "C04",
+      "Game overview",
+      "Latest draw, next draw, actions, archive link"
+    ],
+    [
+      "C05",
+      "Results archive",
+      "Game/era/date filters and draw rows"
+    ],
+    [
+      "C06",
+      "Draw detail",
+      "Ball strip, draw ID/date, complete payout list, source state"
+    ],
+    [
+      "C07",
+      "Check numbers input",
+      "Game, draw, personal board input"
+    ],
+    [
+      "C08",
+      "Check comparison",
+      "Both number sets, match count, prize pending/available states"
+    ],
+    [
+      "C09",
+      "My boards",
+      "Reference history list, filters, add action"
+    ],
+    [
+      "C10",
+      "Board detail",
+      "A/B/C rows, notes, dates, use/edit actions"
+    ],
+    [
+      "C11",
+      "Board editor",
+      "Name, game, board rows, add/remove, save preview"
+    ],
+    [
+      "C12",
+      "Number picker sheet",
+      "Tray, grid, clear, randomize, confirm"
+    ],
+    [
+      "C13",
+      "Quick pick setup",
+      "Game and board-count stepper"
+    ],
+    [
+      "C14",
+      "Generated boards",
+      "Mock lines, lock/edit/save-preview controls"
+    ],
+    [
+      "C15",
+      "Draw calendar",
+      "Month/list, selected date, game events"
+    ],
+    [
+      "C16",
+      "Notification list",
+      "Result/reminder examples and empty state"
+    ],
+    [
+      "C17",
+      "Notification preferences",
+      "Simple per-game switches, demo permission state"
+    ],
+    [
+      "C18",
+      "Help index",
+      "Games, checking, saving and research explanations"
+    ],
+    [
+      "C19",
+      "Game/how-to guide",
+      "Illustrated steps using actual UI components"
+    ],
+    [
+      "C20",
+      "Settings",
+      "Display preferences and simple data controls"
+    ],
+    [
+      "C21",
+      "Data status",
+      "Last update, coverage, offline/stale/missing states"
+    ],
+    [
+      "C22",
+      "About",
+      "Independent-app identity, sources, privacy/help links"
+    ],
+    [
+      "C23",
+      "Game/era selector",
+      "Separate current and retired formats"
+    ],
+    [
+      "C24",
+      "Date/range filter sheet",
+      "Last-N/custom, valid boundary examples"
+    ],
+    [
+      "C25",
+      "Save/name sheet",
+      "Naming, success and duplicate-name examples"
+    ],
+    [
+      "C26",
+      "Delete/discard dialog",
+      "Cancel, explicit action, unsaved-change state"
+    ],
+    [
+      "C27",
+      "Export preview",
+      "Board/research summary layout; export deferred"
+    ]
+  ],
+  "tools": [
+    [
+      "T01 Number frequencies",
+      "Game, era, last 20/50/100/all eligible draws or custom dates; main/bonus/special pool",
+      "Sortable number grid, bar/table switch, appearances, eligible draws, percent, number detail link",
+      "Core"
+    ],
+    [
+      "T02 Check past combinations",
+      "One to six selected numbers where the game permits; date range; contains-all or match-count mode",
+      "Exact/subset matches, number of draws examined, matched-date list, highlighted balls, no-match state",
+      "Core"
+    ],
+    [
+      "T03 Number detail",
+      "Selected number plus inherited filters",
+      "Appearances, last seen, current/average/longest gap, recent draws, companions",
+      "Core"
+    ],
+    [
+      "T04 Last seen & gaps",
+      "Game, pool, date range",
+      "Sorted rows of ball, last draw date, draws since appearance; never-seen-in-sample state",
+      "Core"
+    ],
+    [
+      "T05 Pairs & triplets",
+      "Pair/triplet toggle, optional included number",
+      "Ranked sets, count, eligible sample, last seen, matching-draw links",
+      "Core"
+    ],
+    [
+      "T06 Number companions",
+      "Anchor number, range",
+      "Co-occurring numbers with count and explicitly named denominator",
+      "Core"
+    ],
+    [
+      "T07 Pattern explorer",
+      "Range and chosen metric",
+      "Odd/even, high/low, sum, spread, consecutive runs, last digits; chart plus table",
+      "Secondary"
+    ],
+    [
+      "T08 Draw repeats",
+      "Consecutive-draw comparison or specified two draws",
+      "Repeated balls and repeat-count distribution",
+      "Secondary"
+    ],
+    [
+      "T09 Number generator",
+      "Game, boards, include/exclude, optional locked numbers, optional structural filters",
+      "Unique mock boards, constraint summary, edit/save, impossible-filter state",
+      "Core"
+    ],
+    [
+      "T10 Combination count",
+      "Pool size, board size, fixed numbers",
+      "Combination count, definition and expandable formula",
+      "Core"
+    ],
+    [
+      "T11 Odds calculator",
+      "Game/era, match tier, distinct board count",
+      "Probability/“1 in” presentation, assumptions; distinguish jackpot from overlapping lower-tier events",
+      "Core"
+    ],
+    [
+      "T12 Cost planner",
+      "Game, boards, draws, eligible add-ons, price source",
+      "Itemised estimate, total, unavailable-price state",
+      "Core"
+    ],
+    [
+      "T13 Board analyser",
+      "Chosen line",
+      "Sum, odd/even, spread, runs, last digits; descriptive summary without score",
+      "Secondary"
+    ],
+    [
+      "T14 Wheel builder",
+      "Pool, full/fixed/reduced mode, line or budget cap",
+      "Board count, cost estimate, coverage statement, sample boards and export preview",
+      "Advanced"
+    ],
+    [
+      "T15 Coverage & duplicates",
+      "Selected board collection",
+      "Duplicate lines, distinct lines, pool distribution and shared-number matrix",
+      "Advanced"
+    ],
+    [
+      "T16 Historical replay",
+      "Explicit method, training period, later evaluation period, budget",
+      "Historical matches/cost/payout-known state, baseline comparison and sample limitations",
+      "Advanced"
+    ],
+    [
+      "T17 Budget log",
+      "Month, manual spend/winnings entries",
+      "Spend, returns, net result, monthly list; no bank connection",
+      "Secondary"
+    ]
+  ]
+}
