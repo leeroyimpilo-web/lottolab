@@ -1,38 +1,43 @@
-# LottoLab UI-first (separate preview)
+# LottoLab UI-first — complete interface preview
 
-Repo: leeroyimpilo-web/lottolab
-Branch: lottolab-ui-first
-Directory: lottolab-ui
-Preview route: /ui-preview (in root Next.js workspace)
+Repository: `leeroyimpilo-web/lottolab`  
+Branch: `lottolab-ui-first`  
+Isolated presentation source: `lottolab-ui/`  
+Web review: `/ui-preview`  
+Screen gallery: `/ui-preview/gallery`
 
-This is a new design-only interface. All values are invented sample data. It is NOT the existing LottoLab app and does not modify the original Android app. No draw feeds, databases, calculations, prizes or real random-number generation are enabled.
+## UI-first delivery
 
-## How to preview
+This branch contains 27 core screen/overlay destinations (C01–C27), 17 tool input/result screens (T01–T17), shared design components, deterministic sample fixtures, designed state variants, a screen-gallery entry, Android-compatible standalone Vite assets, and accessibility labels.
 
-1. Check out the lottolab-ui-first branch in the root repository.
-2. Install the root dependencies: pnpm install.
-3. Start the Next.js development server: pnpm dev.
-4. Open http://localhost:3000/ui-preview.
+The complete presentation follows `docs/MASTER_PROMPT.md`. It is deliberately distinct from the original Next.js and LottoLab Next Android projects. It does not import their live data, calculators, accounts, paid functionality, storage or network services. All sample lottery values and prizes are invented and visibly labelled.
 
-Sprint 1 fidelity anchors are available at /ui-preview/gallery (development route, not shown in normal navigation). This branch also includes a first slice of Sprint 2 (Home, catalogue, game overview, draw-detail example, central Menu and LottoLab hub). Other menu destinations are clearly marked as upcoming screen shells.
+### Route families
 
-## Source
+- C01–C04: Home, global menu, games, game overview
+- C05–C06/C23–C24: results, prize detail, game/era and date selection
+- C09–C14/C25–C26: boards, editing, picker, quick-pick setup, sample board output, save/discard
+- C07–C08: ticket-check input and comparison illustration
+- T01–T17: every LottoLab research/number planning tool, with input and result panels
+- C15–C22/C27: calendar, notifications, help, settings, data status, about and export preview
+- Sprint 11: route/state gallery and mobile screenshot test automation
 
-- docs/MASTER_PROMPT.md — verbatim design authority
-- design/screen-inventory.json — C01–C27 and T01–T17
-- design/tokens.json — initial design values
-- design/state-matrix.md — required states and fixture assumptions
-- docs/SPRINT_1_CHECKLIST.md — what is implemented, what remains untested
-- src/fixtures.ts — deterministic UI example data
-- src/components.tsx — reusable visual components
-- src/LottoLabPreview.tsx — navigable demonstration
+### Local web preview
 
-## Boundary
+From repository root run `pnpm install` and `pnpm dev`, then open `http://localhost:3000/ui-preview`. The gallery is at `http://localhost:3000/ui-preview/gallery`.
 
-Keep design changes in lottolab-ui/ and app/ui-preview/ until the complete visual review. No new APIs, database, statistics, auth, payments, notifications, real exports, or Android APK until explicitly scheduled and approved. The preview route uses CSS to hide the old app's surrounding navigation only on /ui-preview; no existing source screens were modified.
+### Offline Android UI code
 
-See the master prompt's Sprint 0–11 sequence. Current focus: Sprint 1 verification, then Sprint 2 screen completion.
+From `lottolab-ui/` run `npm install`, `npm run typecheck`, `npm run build`, `npx cap add android`, `npx cap sync android`. Capacitor app ID: `za.co.lottolab.uipreview`. Android's physical Back button dismisses the current sheet or returns to the previous UI screen.
 
-## Standalone Android UI-preview build
+The original Android debug build pipeline is **manual-only**. Build and signing must happen **after** the completed UI is reviewed, not on each new source change. The resulting APK is a debug UI preview and cannot be described as a working lottery-analysis application.
 
-From `lottolab-ui/`, run `npm install`, `npm run typecheck`, `npm run build`, `npx cap add android`, and `npx cap sync android`, followed by Android Gradle `assembleDebug`. The GitHub Actions workflow `lottolab-ui-android.yml` builds and uploads the debug APK. The UI project deliberately uses its own npm dependency installation, distinct from the root pnpm workspace.
+### QA evidence
+
+- `.github/workflows/lottolab-ui-preview.yml` — TypeScript (root and isolated), offline Vite assets and static Next.js export, *no APK*
+- `.github/workflows/lottolab-ui-review.yml` — Playwright route audit and mobile screenshot atlas
+- `tests/audit.mjs` — 44 destinations, mobile widths, menu/picker/comparison/calendar and screenshots
+- `docs/SPRINT_11_ACCEPTANCE.md` — acceptance evidence, remaining manual checks and handoff status
+- `src/contracts.ts` — future-ready typed view-model boundaries; not implemented business logic
+
+All functionality sprints F1–F9 are deferred until visual UI approval and official lottery rules/data access are verified.
