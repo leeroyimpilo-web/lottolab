@@ -14,7 +14,7 @@ This is a new design-only interface. All values are invented sample data. It is 
 3. Start the Next.js development server: pnpm dev.
 4. Open http://localhost:3000/ui-preview.
 
-Sprint 1 fidelity anchors are available from the "UI gallery" preview page. This branch also includes a first slice of Sprint 2 (Home, catalogue, game overview, draw-detail example, central Menu and LottoLab hub). Other menu destinations are clearly marked as upcoming screen shells.
+Sprint 1 fidelity anchors are available at /ui-preview/gallery (development route, not shown in normal navigation). This branch also includes a first slice of Sprint 2 (Home, catalogue, game overview, draw-detail example, central Menu and LottoLab hub). Other menu destinations are clearly marked as upcoming screen shells.
 
 ## Source
 

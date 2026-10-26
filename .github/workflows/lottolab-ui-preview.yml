@@ -1,0 +1,36 @@
+name: Validate LottoLab UI-first preview
+
+on:
+  push:
+    branches: [lottolab-ui-first]
+    paths:
+      - "lottolab-ui/**"
+      - "app/ui-preview/**"
+      - ".github/workflows/lottolab-ui-preview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: TypeScript checks
+        run: pnpm exec tsc --noEmit
+      - name: Static export (including /ui-preview and /ui-preview/gallery)
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+        run: pnpm run build

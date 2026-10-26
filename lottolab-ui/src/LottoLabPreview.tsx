@@ -27,8 +27,8 @@ const future: Record<string,string> = {
   settings:"Sprint 10 will add settings and data availability.",
   about:"Sprint 10 will add app identity, sources and help.",
 };
-export default function LottoLabPreview() {
-  const [view,setView] = useState<View>("home");
+export default function LottoLabPreview({startInGallery=false}:{startInGallery?:boolean}) {
+  const [view,setView] = useState<View>(startInGallery?"gallery":"home");
   const [trail,setTrail] = useState<View[]>([]);
   const [gameId,setGameId] = useState<GameId>("lotto");
   const [menuOpen,setMenuOpen] = useState(false);
@@ -76,7 +76,7 @@ export default function LottoLabPreview() {
       <button type="button" className="ll-card ll-cta-card ll-card-row" onClick={()=>menuSelect("check")}><span className="ll-cta-icon"><TicketCheck size={24}/></span><span style={{flex:1}}><h3>Check my numbers</h3><p>Compare your board with a draw</p></span><ChevronRight size={20}/></button>
       <button type="button" className="ll-card ll-cta-card ll-card-row" onClick={()=>menuSelect("boards")}><span className="ll-cta-icon"><Layers3 size={24}/></span><span style={{flex:1}}><h3>My boards</h3><p>Keep your selected numbers together</p></span><ChevronRight size={20}/></button>
       <button type="button" className="ll-card ll-cta-card ll-card-row" onClick={()=>navigate("lab")}><span className="ll-cta-icon"><FlaskConical size={24}/></span><span style={{flex:1}}><h3>LottoLab</h3><p>Research and plan your numbers</p></span><ChevronRight size={20}/></button>
-      <div className="ll-footer-link"><button type="button" className="ll-text-link" onClick={()=>navigate("gallery")}>Development UI gallery <ChevronRight size={16}/></button></div>
+      <div className="ll-footer-link"><button type="button" className="ll-text-link" onClick={()=>navigate("games")}>Browse all games <ChevronRight size={16}/></button></div>
     </>;
   }
   function prize() {
@@ -155,7 +155,7 @@ export default function LottoLabPreview() {
       <nav className="ll-menu-sheet" aria-label="LottoLab main menu">
         <div className="ll-sheet-grip"/><div className="ll-menu-hd"><h2>Menu</h2><button type="button" className="ll-icon-button" onClick={()=>setMenuOpen(false)} aria-label="Close menu"><X size={21}/></button></div>
         {menuDestinations.map((m,i)=>{const Icon=menuIcons[i];return <button type="button" key={m.id} className={"ll-menu-row"+((view===m.id)?" active":"")} onClick={()=>menuSelect(m.id)}><Icon size={20}/><span>{m.label}</span><ChevronRight size={18}/></button>})}
-        <button type="button" className="ll-text-link" style={{margin:"15px auto",display:"flex"}} onClick={()=>{setMenuOpen(false);navigate("gallery")}}>Development gallery <ChevronRight size={16}/></button>
+        
       </nav>
     </div>}
     {pickerOpen&&<NumberPicker game={game} initial={picked} onClose={onPickerClose} onConfirm={(value)=>{setPicked(value);setPickerOpen(false);setNotice("Board selected for this UI preview only: "+value.main.join(", ")+(value.special?" + "+value.special:"")+". Not saved.");}}/>}
