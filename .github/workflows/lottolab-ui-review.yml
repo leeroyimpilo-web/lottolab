@@ -7,6 +7,9 @@ on:
       - "app/ui-preview/**"
       - ".github/workflows/lottolab-ui-review.yml"
   workflow_dispatch:
+concurrency:
+  group: lottolab-ui-review-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
