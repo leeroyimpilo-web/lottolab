@@ -140,6 +140,25 @@ try {
  await page.getByRole("button",{name:"Update sample board"}).click();
  await page.getByRole("button",{name:"View my boards"}).click();
  assert((await page.getByRole("button",{name:/QA example board/}).count())===1,"Editing generated a duplicate example board");
+ // Date-range validation and compatible special-number pool options.
+ await page.goto(galleryURL,{waitUntil:"networkidle"});
+ await page.getByRole("button",{name:/C24 · Date range/}).click();
+ await page.getByRole("button",{name:"Custom dates (example)"}).click();
+ const fromDate=page.locator(".ll-small-sheet input[type=date]").first();
+ const toDate=page.locator(".ll-small-sheet input[type=date]").last();
+ await fromDate.fill("2026-10-29");
+ assert(!(await page.getByRole("button",{name:"Apply sample filter"}).isEnabled()),"Reversed date range must not apply");
+ assert(await page.getByRole("alert").isVisible(),"Invalid date range needs an accessible error");
+ await toDate.fill("2026-10-30");
+ assert(await page.getByRole("button",{name:"Apply sample filter"}).isEnabled(),"Valid date range must apply");
+ await page.goto(galleryURL,{waitUntil:"networkidle"});
+ await page.getByRole("button",{name:/T01 · Number frequencies/}).click();
+ await page.getByRole("combobox",{name:"Lottery game"}).selectOption({label:"PowerBall"});
+ assert(await page.getByRole("combobox",{name:"Main / bonus / special pool"}).locator("option",{hasText:"PowerBall"}).count()===1,
+   "PowerBall game should show a separate special pool");
+ await page.getByRole("combobox",{name:"Lottery game"}).selectOption({label:"Daily Lotto"});
+ assert((await page.getByRole("combobox",{name:"Main / bonus / special pool"}).locator("option").count())===1,
+   "Daily Lotto must not offer incompatible bonus and PowerBall pools");
  assert(errors.length===0,"Browser errors: "+errors.join(" | "));
  console.log("PASS: "+summary.length+" routes, all 17 sample tool output views, 10 result states and mobile 360/390/412 screen atlas. Picker, menu, calendar and board input flow verified.");
 } finally { await browser.close(); }
