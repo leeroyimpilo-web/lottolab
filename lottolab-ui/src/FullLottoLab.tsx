@@ -182,13 +182,14 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
       <Pill onClick={()=>next("C07")}>Check my numbers</Pill><div className="ll-vspace"/><Pill variant="outline" onClick={()=>next("C05")}>Browse history</Pill></>;
   }
   function checkInput(){
+    const validBoard=selected.length===game.pick&&(!game.specialPool||special!==undefined);
     return <><p className="ll-subheading">Choose the game, draw and a board you want to compare. Result checking is UI-only.</p>
       <div className="ll-card">{section("Your selection")}
         <label className="ll-field"><span>Game</span><select value={gameId} onChange={e=>selectGame(e.target.value as GameId)}>{games.map(g=><option key={g.id} value={g.id}>{g.label}</option>)}</select></label>
         <label className="ll-field"><span>Example draw</span><select><option>DEMO-001 · {game.exampleDate}</option><option>DEMO-002 · previous sample</option></select></label>
         <div className="ll-field"><span>Board A · {selected.length}/{game.pick} selected</span><button type="button" className="ll-select-numbers" onClick={()=>openPicker("board","check",selected,special)}>Choose your numbers <ChevronRight size={18}/></button></div>
         {selected.length>0&&<BoardBalls numbers={selected} game={game} special={special}/>}
-        <Pill onClick={()=>next("C08")}>Preview comparison</Pill></div>
+        {!validBoard&&<p className="ll-footnote">Choose a complete main-number board{game.specialPool?" and one separate PowerBall":""} to preview comparison.</p>}<Pill disabled={!validBoard} onClick={()=>next("C08")}>Preview comparison</Pill></div>
       <div className="ll-help-card"><Info size={20}/><p>A saved board or personal number selection is not proof of a ticket purchase or winnings.</p></div>
       <RowLink title="Use an example saved board" sub={activeBoard.name} onClick={()=>{setGameId(activeBoard.gameId);setSelected(activeBoard.main);setSpecial(activeBoard.special)}} icon={<Layers3 size={19}/>}/></>;
   }
@@ -225,7 +226,7 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
       {selected.length>0&&<BoardBalls numbers={selected} game={game} special={special}/>}
       <div className="ll-two-controls ll-top-gap"><button type="button" onClick={()=>openPicker("board","board")}>Add / edit</button><button type="button" onClick={()=>{setSelected([]);setSpecial(undefined)}}>Clear board</button></div>
       <p className="ll-footnote">Newly created lines are demonstrations and are not submitted to a lottery operator.</p>
-      <Pill onClick={()=>openSave("C11")}>Save preview</Pill></div>
+      <Pill disabled={selected.length!==game.pick||(!!game.specialPool&&special===undefined)} onClick={()=>openSave("C11")}>Save preview</Pill></div>
       <button type="button" className="ll-danger-link" onClick={()=>{setConfirmAction("discard");setSheet("C26")}}>Discard changes</button></>;
   }
   function quickSetup(){
