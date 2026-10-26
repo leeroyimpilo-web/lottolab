@@ -53,7 +53,7 @@ export function PrizeTable({rows}:{rows:PrizeRow[]}) {
     <div className="ll-prize-head"><span>Division</span><span>Winners</span><span>Prize each</span></div>
     {rows.map((r,i)=><div className={"ll-prize-row"+(r.state?" ll-prize-"+r.state:"")} key={i}>
       <div className="ll-division-cell"><strong>{r.division}</strong><span>{r.match}</span></div>
-      <div className="ll-prize-value" aria-label={"Winners "+r.winners}>{r.winners}</div>
+      <div className="ll-prize-value" aria-label={"Winners "+r.winners}>{r.state==="unknown"?"N/A":r.winners}</div>
       <div className="ll-prize-value">{r.payout}</div>
     </div>)}
     <p className="ll-table-note">Illustrative divisions and payouts only. A zero count is not missing data.</p>
