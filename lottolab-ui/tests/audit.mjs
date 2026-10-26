@@ -148,7 +148,7 @@ try {
  const toDate=page.locator(".ll-small-sheet input[type=date]").last();
  await fromDate.fill("2026-10-29");
  assert(!(await page.getByRole("button",{name:"Apply sample filter"}).isEnabled()),"Reversed date range must not apply");
- assert(await page.getByRole("alert").isVisible(),"Invalid date range needs an accessible error");
+ assert(await page.locator(".ll-small-sheet [role=alert]").isVisible(),"Invalid date range needs an accessible error");
  await toDate.fill("2026-10-30");
  assert(await page.getByRole("button",{name:"Apply sample filter"}).isEnabled(),"Valid date range must apply");
  await page.goto(galleryURL,{waitUntil:"networkidle"});
