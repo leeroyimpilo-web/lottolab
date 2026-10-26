@@ -117,6 +117,10 @@ export function ToolScreen(props:ToolScreenProps){
     }
   }
   const dateRanges=["Last 20 eligible draws","Last 50 eligible draws","Last 100 eligible draws","All eligible draws","Custom dates (UI example)"];
+  const neutralSelect=(name:string,options:string[],value:string,change:(value:string)=>void)=>
+    <label className="ll-field"><span>{name}</span><select value={value} onChange={e=>change(e.target.value)}>
+      {options.map(o=><option key={o} value={o}>{o}</option>)}
+    </select></label>;
   function choiceField(field:string,opts:string[],defaultValue=opts[0]){
     const value=fieldChoices[field]||defaultValue;
     return <label className="ll-field"><span>{field}</span>
