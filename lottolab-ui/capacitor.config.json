@@ -1,0 +1,11 @@
+{
+  "appId": "za.co.lottolab.uipreview",
+  "appName": "LottoLab UI Preview",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

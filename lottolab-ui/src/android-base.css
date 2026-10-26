@@ -1,0 +1,8 @@
+:root{font-family:Roboto,Arial,Helvetica,sans-serif;color:#2D2D38;background:#E3ECEF;font-synthesis:none;text-rendering:optimizeLegibility}
+*,*::before,*::after{box-sizing:border-box}
+html,body,#root{margin:0;width:100%;min-height:100dvh;background:#E3ECEF}
+body{overflow-x:hidden}
+button,select,input{font:inherit}
+.ll-preview{padding-top:max(0px,env(safe-area-inset-top));padding-bottom:max(115px,env(safe-area-inset-bottom))}
+.ll-floating-wrap{padding-bottom:env(safe-area-inset-bottom);height:calc(85px + env(safe-area-inset-bottom))}
+.ll-picker{padding-bottom:env(safe-area-inset-bottom)}
