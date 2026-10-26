@@ -56,6 +56,8 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
   const [gameId,setGameId]=useState<GameId>("lotto");
   const [era,setEra]=useState(ruleLabel);
   const [range,setRange]=useState("Last 100 eligible draws");
+  const [dateFrom,setDateFrom]=useState("2026-10-01");
+  const [dateTo,setDateTo]=useState("2026-10-26");
   const [boards,setBoards]=useState<MockBoard[]>(initialBoards);
   const [boardId,setBoardId]=useState("A");
   const [editingBoardId,setEditingBoardId]=useState<string|null>(null);
@@ -118,8 +120,8 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
   }
   function selectBoard(b:MockBoard){setBoardId(b.id);setEditingBoardId(null);setGameId(b.gameId);next("C10");}
   function navMenu(s:ScreenId){setSheet(null);if(s==="T01"){next("LAB");return;}next(s);}
-  function openSave(returnTo:Route=view){setReturnRoute(returnTo);setName(isTool(returnTo)?"My research preview":editingBoardId?(boards.find(b=>b.id===editingBoardId)?.name||"My selected numbers"):"My selected numbers");setSavedPreview(false);setSheet("C25");}
-  function startNewBoard(){setEditingBoardId(null);setSelected([]);setSpecial(undefined);next("C11");}
+  function openSave(returnTo:Route=view){setReturnRoute(returnTo);setName(isTool(returnTo)?"My research preview":editingBoardId?(boards.find(b=>b.id===editingBoardId)?.name||"My selected numbers"):"My selected numbers");setNotes(isTool(returnTo)?"":editingBoardId?(boards.find(b=>b.id===editingBoardId)?.note||""):"");setSavedPreview(false);setSheet("C25");}
+  function startNewBoard(){setEditingBoardId(null);setSelected([]);setSpecial(undefined);setNotes("");next("C11");}
   function saveSession(){
     // A tool's research preview must never silently become a made-up lottery board.
     if(isTool(returnRoute)){setSavedPreview(true);return;}
@@ -413,8 +415,9 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
       <Pill variant="outline" onClick={()=>setSheet(null)}>Done</Pill></div>;
     if(sheet==="C24")return <div className="ll-small-sheet"><h2>Select date range</h2>
       {["Last 20 eligible draws","Last 50 eligible draws","Last 100 eligible draws","All eligible draws","Custom dates (example)"].map(s=><button type="button" className={"ll-choice-row"+(range===s?" selected":"")} onClick={()=>setRange(s)} key={s}><span>{s}</span>{range===s&&<Check size={17}/>}</button>)}
-      {range.includes("Custom")&&<div className="ll-two-controls"><label>From<input type="date" defaultValue="2026-10-01"/></label><label>To<input type="date" defaultValue="2026-10-26"/></label></div>}
-      <Pill onClick={()=>setSheet(null)}>Apply sample filter</Pill></div>;
+      {range.includes("Custom")&&<div className="ll-two-controls"><label>From<input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)}/></label><label>To<input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)}/></label></div>}
+      {range.includes("Custom")&&dateFrom>dateTo&&<p className="ll-footnote" role="alert">From date must be on or before To date.</p>}
+      <Pill disabled={range.includes("Custom")&&(!dateFrom||!dateTo||dateFrom>dateTo)} onClick={()=>setSheet(null)}>Apply sample filter</Pill></div>;
     if(sheet==="C25")return <div className="ll-small-sheet"><h2>{isTool(returnRoute)?"Save research preview":editingBoardId?"Update example board":"Save board preview"}</h2><p className="ll-subheading">Session-only examples. No database or account is connected.</p>
       {!savedPreview?<><label className="ll-field"><span>{isTool(returnRoute)?"Research name":"Board name"}</span><input value={name} onChange={e=>setName(e.target.value)} maxLength={60} placeholder="My numbers"/></label>
       <label className="ll-field"><span>Notes (optional)</span><textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={3} placeholder="Private note for this example"/></label>

@@ -135,7 +135,7 @@ export function ToolScreen(props:ToolScreenProps){
       {options.map(o=><option key={o} value={o}>{o}</option>)}
     </select></label>;
   function choiceField(field:string,opts:string[],defaultValue=opts[0]){
-    const value=fieldChoices[field]||defaultValue;
+    const value=fieldChoices[field]&&opts.includes(fieldChoices[field])?fieldChoices[field]:defaultValue;
     return <label className="ll-field"><span>{field}</span>
       <select value={value} onChange={e=>setFieldChoices(p=>({...p,[field]:e.target.value}))}>
         {opts.map(o=><option key={o} value={o}>{o}</option>)}
