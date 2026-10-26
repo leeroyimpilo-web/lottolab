@@ -1,0 +1,74 @@
+name: LottoLab Complete UI Review APK
+on:
+  push:
+    branches: [lottolab-ui-first]
+    paths:
+      - '.github/workflows/lottolab-ui-final-review-apk.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android-ui-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install independent UI dependencies
+        working-directory: lottolab-ui
+        run: npm install --no-audit --no-fund
+      - name: Typecheck standalone Android UI
+        working-directory: lottolab-ui
+        run: npm run typecheck
+      - name: Bundle offline UI
+        working-directory: lottolab-ui
+        run: npm run build
+      - name: Confirm bundled entry point
+        working-directory: lottolab-ui
+        run: test -s dist/index.html
+      - name: Generate Android WebView project
+        working-directory: lottolab-ui
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Install Android platform
+        run: |
+          SDK_ROOT="$ANDROID_HOME"
+          test -n "$SDK_ROOT"
+          SDKMANAGER=$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)
+          test -n "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" --install 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Build installable Android debug APK
+        working-directory: lottolab-ui/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon --stacktrace assembleDebug
+      - name: Confirm distinct package identifier
+        working-directory: lottolab-ui/android
+        run: |
+          grep -R 'za.co.lottolab.uipreview' app/build.gradle app/src/main/AndroidManifest.xml app/src/main/java || true
+          test -s app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish preview APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LottoLab-Complete-UI-Review-Android-APK
+          path: lottolab-ui/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
+          if-no-files-found: error
+      - name: Explain build status
+        run: |
+          echo '### LottoLab complete UI design-review Android debug APK' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Package: za.co.lottolab.uipreview' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Independent of the production LottoLab install.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Uses local bundled UI assets and invented demo fixtures only.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Debug builds use non-production signing; production certificate pending.' >> "$GITHUB_STEP_SUMMARY"
