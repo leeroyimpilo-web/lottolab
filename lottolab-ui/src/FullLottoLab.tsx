@@ -68,7 +68,7 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
   const [toolNumbers,setToolNumbers]=useState<number[]>([]);
   const [drawFilter,setDrawFilter]=useState("All games");
   const [search,setSearch]=useState("");
-  const [currentMonth,setCurrentMonth]=useState("October 2026");
+  const [monthOffset,setMonthOffset]=useState(0);
   const [quickCount,setQuickCount]=useState(3);
   const [selectedTab,setSelectedTab]=useState("Popular");
   const [stateOverride,setStateOverride]=useState<StateExample>("populated");
@@ -243,9 +243,14 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
       <Pill onClick={()=>openSave("C14")}>Save preview</Pill><div className="ll-vspace"/><Pill variant="outline" onClick={()=>next("C27")}>Export layout preview</Pill></>;
   }
   function calendar(){
+    const monthDate=new Date(2026,9+monthOffset,1);
+    const firstDay=monthDate.getDay();
+    const daysInMonth=new Date(2026,10+monthOffset,0).getDate();
+    const slotCount=Math.ceil((firstDay+daysInMonth)/7)*7;
+    const monthLabel=new Intl.DateTimeFormat("en-ZA",{month:"long",year:"numeric"}).format(monthDate);
     return <><div className="ll-card">{section("Draw calendar","Examples")}
-      <div className="ll-card-row ll-calendar-head"><button type="button" onClick={()=>setCurrentMonth("September 2026")} aria-label="Previous month">‹</button><strong>{currentMonth}</strong><button type="button" onClick={()=>setCurrentMonth("November 2026")} aria-label="Next month">›</button></div>
-      <div className="ll-calendar-grid">{days.map((n,i)=><strong key={i}>{n}</strong>)}{Array.from({length:35},(_,i)=><button type="button" key={i} className={i+1===26?"selected":""} onClick={()=>setSelectedTab("Day "+(i+1))}>{i<31?i+1:""}</button>)}</div>
+      <div className="ll-card-row ll-calendar-head"><button type="button" onClick={()=>setMonthOffset(x=>x-1)} aria-label="Previous month">‹</button><strong>{monthLabel}</strong><button type="button" onClick={()=>setMonthOffset(x=>x+1)} aria-label="Next month">›</button></div>
+      <div className="ll-calendar-grid">{days.map((n,i)=><strong key={i}>{n}</strong>)}{Array.from({length:slotCount},(_,i)=>{const day=i-firstDay+1;return <button type="button" key={i} disabled={day<1||day>daysInMonth} className={day===26&&monthOffset===0?"selected":""} onClick={()=>setSelectedTab("Day "+day)}>{day>=1&&day<=daysInMonth?day:""}</button>})}</div>
       <p className="ll-subheading">Selected: {selectedTab.startsWith("Day")?selectedTab:"Day 26"} · Event examples only</p></div>
       <div className="ll-list-group ll-block-gap">{sampleCalendar.map((x,i)=><RowLink key={i} title={x.name} sub={"Example event · "+x.day+" October (not a verified schedule)"} onClick={()=>next("C04")}/>)}</div>
       <p className="ll-footnote">Real draw dates and provider cutoffs must be verified separately and cannot be inferred from this example calendar.</p></>;
