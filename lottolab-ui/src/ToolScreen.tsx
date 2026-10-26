@@ -1,9 +1,9 @@
 "use client";
-import {useMemo,useState} from "react";
+import {useState} from "react";
 import {ChevronRight,HelpCircle,Settings2,Search,Table2,BarChart3,SlidersHorizontal} from "lucide-react";
 import {Game, games} from "./fixtures";
 import {DemoLabel,NumberBall,Pill} from "./components";
-import {ToolId,toolById,tools,sampleNumberFrequency,exampleDraws,sampleGenerated} from "./design-data";
+import {ToolId,toolById,sampleNumberFrequency,exampleDraws,sampleGenerated} from "./design-data";
 
 export interface ToolScreenProps {
   id:ToolId; game:Game; setGame:(id:Game["id"])=>void; era:string;
@@ -21,13 +21,12 @@ function BallStrip({list,game,special}:{list:number[];game:Game;special?:number}
 function ExampleRow({title,detail,right,onClick}:{title:string;detail?:string;right?:string;onClick?:()=>void}) {
   return <button type="button" className="ll-entry" onClick={onClick} disabled={!onClick}><span><strong>{title}</strong>{detail&&<small>{detail}</small>}</span><span className="ll-entry-side">{right}{onClick&&<ChevronRight size={16}/>}</span></button>;
 }
-const numberOptions=[1,2,3,4,5,6,7,8,9,10];
 function ToolBody({id,game,onNavigate,selectedNumbers,view}:{id:ToolId;game:Game;onNavigate:ToolScreenProps["onNavigate"];selectedNumbers:number[];view:"bars"|"table"}) {
   const ball=(n:number)=><NumberBall value={n} size="tiny" accent={game.accent}/>;
   const bar=(label:string,val:number,secondary:string)=><div className="ll-mini-bar" key={label}><div className="ll-mini-bar-head"><strong>{label}</strong><span>{secondary}</span></div><div className="ll-mini-bar-track"><div style={{width:Math.min(100,val)+"%"}}/></div></div>;
   switch(id) {
     case "T01":return <><div className="ll-stats-grid"><Figure label="Example draws" value={String(exampleDraws)}/><Figure label="Highest example count" value="18" sub="18 of 100 draws"/></div>
-      {view==="bars"?sampleNumberFrequency.filter(x=>x.number<=game.pool).map(x=>bar(String(x.number),x.count*4,x.count+" / "+exampleDraws+" · "+x.count+"%")):
+      {view==="bars"?sampleNumberFrequency.filter(x=>x.number<=game.pool).map(x=>bar(String(x.number),100*x.count/exampleDraws,x.count+" / "+exampleDraws+" · "+x.count+"%")):
       <div className="ll-list-group">{sampleNumberFrequency.filter(x=>x.number<=game.pool).map(x=><ExampleRow key={x.number} title={"Number "+x.number} detail={x.count+" / 100 eligible example draws"} right={x.count+"%"} onClick={()=>onNavigate("T03")}/>)}</div>}
       <p className="ll-footnote">Percent = sample draws containing the number ÷ eligible sample draws. A frequency describes history, not a future advantage.</p></>;
     case "T02":return <><Figure label="Example search" value="2 matching draws" sub="100 invented eligible draws examined"/>
@@ -81,22 +80,87 @@ export function ToolScreen(props:ToolScreenProps){
   const t=toolById[id];const [showResult,setShowResult]=useState(false);
   const [view,setView]=useState<"bars"|"table">("bars");
   const [range,setRange]=useState("Last 100 eligible draws");
-  const [pool,setPool]=useState("Main balls");
+  const pool="Main balls";
   const [advanced,setAdvanced]=useState(false);
-  const [quantity,setQuantity]=useState(3);
-  const [mode,setMode]=useState("Contains all");
+  const [fieldChoices,setFieldChoices]=useState<Record<string,string>>({});
+  const [counts,setCounts]=useState<Record<string,number>>({});
+  const [money,setMoney]=useState<Record<string,string>>({});
   const [exampleEmpty,setExampleEmpty]=useState(false);
-  const [useHelp,setUseHelp]=useState(false);
-  const pickerMode=id==="T02"?"subset":id==="T14"?"wheel":"board";
-  const min=1,max=10;
-  const neutralSelect=(name:string,options:string[],value:string,change:(v:string)=>void)=><label className="ll-field"><span>{name}</span><select value={value} onChange={e=>change(e.target.value)}>{options.map(x=><option value={x} key={x}>{x}</option>)}</select></label>;
-  function customField(field:string,i:number){
-    if(/date range|period/i.test(field))return neutralSelect(field,["Last 20 eligible draws","Last 50 eligible draws","Last 100 eligible draws","All eligible draws","Custom dates (UI example)"],range,setRange);
-    if(/pool|main \/ bonus/i.test(field))return neutralSelect(field,["Main balls","Bonus ball","Special PowerBall"],pool,setPool);
-    if(/number of boards|boards|draws|fixed numbers|pool size|budget/i.test(field))return <label className="ll-field" key={field}><span>{field}</span><div className="ll-stepper"><button type="button" onClick={()=>setQuantity(n=>Math.max(min,n-1))}>−</button><strong>{quantity}</strong><button type="button" onClick={()=>setQuantity(n=>Math.min(max,n+1))}>+</button></div></label>;
-    if(/number$|anchor|chosen line|include number/i.test(field))return <div className="ll-field" key={field}><span>{field}</span><button type="button" className="ll-select-numbers" onClick={()=>onOpenPicker(pickerMode)}>{selectedNumbers.length?selectedNumbers.join(", "):"Choose numbers"} <ChevronRight size={18}/></button></div>;
-    if(/mode|pairs \/ triplets|wheel|sort|pattern|comparison/i.test(field))return neutralSelect(field,["Contains all","Match count","Exact full line","Pairs","Triplets","Full","Reduced"],mode,setMode);
-    return <label className="ll-field" key={field}><span>{field}</span><select defaultValue="Standard preview"><option>Standard preview</option><option>Alternate example</option><option>Not available (demo)</option></select></label>;
+  const pickerMode=(id==="T02"||id==="T03"||id==="T05"||id==="T06")?"subset":id==="T14"?"wheel":"board";
+  // Input choices are strictly UI previews. Each field has its own independent value.
+  function fieldOptions(field:string):string[]|null {
+    const poolChoices=game.specialPool?["Main balls",game.specialLabel||"Special ball"]:
+      game.bonus!==undefined?["Main balls","Bonus ball"]:["Main balls"];
+    switch(field){
+      case "Main / bonus / special pool": case "Number pool":return poolChoices;
+      case "Sort by":return ["Most frequent","Least frequent","Number ascending","Number descending","Last seen"];
+      case "Sort by gap":return ["Longest gap first","Shortest gap first","Number ascending"];
+      case "Contains all / match count":return ["Contains all chosen numbers","At least N numbers match","Exact full line"];
+      case "Pairs / triplets":return ["Pairs","Triplets"];
+      case "Pattern":return ["Odd / even balance","High / low numbers","Line total (sum)","Number spread","Consecutive numbers","Last digit"];
+      case "Consecutive / selected draws":return ["Compare consecutive draws","Choose two example draws"];
+      case "Include / exclude / lock":return ["No restrictions","Include selected numbers","Exclude selected numbers","Lock selected numbers"];
+      case "Optional structure filters":return ["No pattern filters","Odd / even example","Range example","Sum range example"];
+      case "Prize tier":return game.specialPool?["All main + special ball","All main numbers","Lower-tier example"]:
+        ["All main numbers","Main plus bonus example","Lower-tier example"];
+      case "Draw type":return ["Single eligible draw","Multiple independent draws"];
+      case "Eligible add-ons":return ["No add-on","Eligible add-on (unverified)"];
+      case "Structure measures":return ["All summary measures","Odd / even","Sum and spread","Consecutive runs","Last digits"];
+      case "Full / fixed / reduced":return ["Full coverage","Fixed-number wheel","Reduced wheel (coverage unverified)"];
+      case "Select collection":return ["Example boards A–D","Example boards A–C","Create collection (future)"];
+      case "Comparison view":return ["Duplicate summary","Shared-number matrix","Number-pool distribution"];
+      case "Method":return ["Unweighted random baseline","Frequency-based historical method","Rule-based selection example"];
+      case "Training period":return ["First 60 eligible example draws","First 40 eligible example draws","Custom training dates"];
+      case "Later evaluation period":return ["Later 40 eligible example draws","Later 20 eligible example draws","Custom evaluation dates"];
+      case "Month":return ["October 2026","September 2026","August 2026","Choose month (future)"];
+      default:return null;
+    }
+  }
+  const dateRanges=["Last 20 eligible draws","Last 50 eligible draws","Last 100 eligible draws","All eligible draws","Custom dates (UI example)"];
+  function choiceField(field:string,opts:string[],defaultValue=opts[0]){
+    const value=fieldChoices[field]||defaultValue;
+    return <label className="ll-field"><span>{field}</span>
+      <select value={value} onChange={e=>setFieldChoices(p=>({...p,[field]:e.target.value}))}>
+        {opts.map(o=><option key={o} value={o}>{o}</option>)}
+      </select>
+    </label>;
+  }
+  function numberField(field:string){
+    const defaultCount=field==="Pool size"?game.pool:field==="Numbers per line"?game.pick:
+      field==="Fixed numbers"?0:field==="Budget"?200:field==="Line or budget limit"?10:field==="Draws"?2:3;
+    const min=field==="Fixed numbers"||field==="Budget"?0:1;
+    const max=field==="Pool size"?99:field==="Numbers per line"?game.pool:
+      field==="Fixed numbers"?game.pick:field==="Budget"?10000:field==="Line or budget limit"?500:50;
+    const step=field==="Budget"?50:1;
+    const current=Math.min(max,Math.max(min,counts[field]??defaultCount));
+    return <label className="ll-field"><span>{field}</span>
+      <div className="ll-stepper">
+        <button type="button" aria-label={"Decrease "+field} disabled={current<=min} onClick={()=>setCounts(p=>({...p,[field]:Math.max(min,current-step)}))}>−</button>
+        <strong aria-live="polite">{current}</strong>
+        <button type="button" aria-label={"Increase "+field} disabled={current>=max} onClick={()=>setCounts(p=>({...p,[field]:Math.min(max,current+step)}))}>+</button>
+      </div>
+    </label>;
+  }
+  function customField(field:string){
+    if(field==="Date range")return <label className="ll-field"><span>{field}</span>
+      <select value={range} onChange={e=>setRange(e.target.value)}>
+        {dateRanges.map(o=><option key={o} value={o}>{o}</option>)}
+      </select></label>;
+    const choices=fieldOptions(field);
+    if(choices)return choiceField(field,choices);
+    if(["Number of boards","Pool size","Numbers per line","Fixed numbers","Distinct boards","Boards","Draws","Line or budget limit","Budget"].includes(field))return numberField(field);
+    if(["Amount spent","Winnings entered manually"].includes(field)){
+      return <label className="ll-field"><span>{field} (R)</span><input type="number" inputMode="decimal" min="0" step="1"
+        value={money[field]??"0"} onChange={e=>setMoney(p=>({...p,[field]:e.target.value}))}/></label>;
+    }
+    if(["Number","Anchor number","Include number (optional)","Choose board","Chosen line","Wheel pool"].includes(field)){
+      return <div className="ll-field"><span>{field}</span>
+        <button type="button" className="ll-select-numbers" onClick={()=>onOpenPicker(field==="Wheel pool"?"wheel":field==="Number"||field==="Anchor number"||field==="Include number (optional)"?"subset":"board")}>
+          {selectedNumbers.length?selectedNumbers.join(", "):"Choose sample numbers"} <ChevronRight size={18}/>
+        </button>
+      </div>;
+    }
+    return <div className="ll-field"><span>{field}</span><small>Optional selection to be specified after visual approval</small></div>;
   }
   const empty=stateOverride==="empty"||stateOverride==="offline-empty"||exampleEmpty;
   return <div className="ll-tool-screen">
@@ -108,7 +172,7 @@ export function ToolScreen(props:ToolScreenProps){
       <div className="ll-field"><span>Rule version</span><button type="button" className="ll-select-numbers" onClick={onSelectEra}>{era}<ChevronRight size={16}/></button></div>
       {(id==="T02"||id==="T03"||id==="T06"||id==="T13"||id==="T14"||id==="T09")&&
       <div className="ll-field"><span>{id==="T02"?"Search numbers":id==="T14"?"Wheel pool":"Numbers"}</span><button type="button" className="ll-select-numbers" onClick={()=>onOpenPicker(pickerMode)}>{selectedNumbers.length?selectedNumbers.join(", "):"Select number balls"}<ChevronRight size={18}/></button></div>}
-      {t.fields.map((field,i)=><div key={field}>{customField(field,i)}</div>)}
+      {t.fields.map(field=><div key={field}>{customField(field)}</div>)}
       <button type="button" className="ll-collapse" onClick={()=>setAdvanced(x=>!x)} aria-expanded={advanced}><SlidersHorizontal size={16}/> {advanced?"Hide":"Show"} additional options <ChevronRight size={16}/></button>
       {advanced&&<div className="ll-extra-options">
         <label><input type="checkbox" defaultChecked/> Include eligible examples only</label>
@@ -119,14 +183,14 @@ export function ToolScreen(props:ToolScreenProps){
     </div>
     {showResult&&<section className="ll-card ll-result-card" aria-label="Illustrative result">
       <div className="ll-section-head"><h2>Example result</h2><DemoLabel small/></div>
-      <div className="ll-result-context">{game.label} · {era} · {range} · {pool}</div>
+      <div className="ll-result-context">{game.label} · {era} · {range} · {fieldChoices["Main / bonus / special pool"]||fieldChoices["Number pool"]||pool}</div>
       {empty?<div className="ll-empty-state"><Search size={29}/><h3>No example results</h3><p>This is a first-use / no-data demonstration. No live history was searched.</p><Pill variant="outline" onClick={()=>setExampleEmpty(false)}>Show example data</Pill></div>:
         stateOverride==="loading"?<div className="ll-empty-state"><h3>Loading preview</h3><p>No background activity is being performed.</p></div>:
         <ToolBody id={id} game={game} onNavigate={onNavigate} selectedNumbers={selectedNumbers} view={view}/>}
       {id==="T01"&&<div className="ll-view-switch"><button className={view==="bars"?"active":""} type="button" onClick={()=>setView("bars")}><BarChart3 size={16}/> Bars</button><button className={view==="table"?"active":""} type="button" onClick={()=>setView("table")}><Table2 size={16}/> Table</button></div>}
       {id==="T02"&&<button className="ll-text-link" type="button" onClick={()=>setExampleEmpty(v=>!v)}>Toggle no matching draw example</button>}
       <div className="ll-result-actions"><Pill variant="outline" onClick={()=>onNavigate("C27")}>Export preview</Pill><Pill onClick={()=>onNavigate("C25")}>Save preview</Pill></div>
-      <div className="ll-privacy-note">Source: invented offline fixture. Sample denominator, game and rule era are presented for layout review, not factual analysis.</div>
+      <div className="ll-privacy-note">Fixed offline illustration only. Changing a control does not recalculate this sample; game, era and filters are presentation choices until functionality is approved.</div>
     </section>}
     {!showResult&&<div className="ll-help-card"><HelpCircle size={20}/><p>Choose options above and tap View sample result. No real calculations or historical searches occur yet.</p></div>}
     <div className="ll-privacy-note">Every valid combination has the same jackpot probability in a fair draw. Past statistics do not predict the next result.</div>
