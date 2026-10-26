@@ -388,7 +388,7 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
   function modalContent(){
     if(sheet==="C12")return pickerSheet();
     if(sheet==="C02")return <nav className="ll-menu-sheet" aria-label="Global menu"><div className="ll-sheet-grip"/><div className="ll-menu-hd"><h2>Menu</h2><button className="ll-icon-button" type="button" aria-label="Close" onClick={()=>setSheet(null)}><X size={21}/></button></div>
-      {globalMenu.map((m,i)=>{const I=menuIcons[i];return <button type="button" className="ll-menu-row" key={i} onClick={()=>navMenu(m.id)}><I size={20}/><span className="ll-flex1"><strong>{m.title}</strong><small>{m.detail}</small></span><ChevronRight size={18}/></button>})}
+      {globalMenu.map((m,i)=>{const I=menuIcons[i];return <button type="button" className={"ll-menu-row"+(view===m.id||(m.id==="T01"&&view==="LAB")?" active":"")} aria-current={view===m.id||(m.id==="T01"&&view==="LAB")?"page":undefined} key={i} onClick={()=>navMenu(m.id)}><I size={20}/><span className="ll-flex1"><strong>{m.title}</strong><small>{m.detail}</small></span><ChevronRight size={18}/></button>})}
     </nav>;
     if(sheet==="C23")return <div className="ll-small-sheet"><h2>Choose game & format</h2><p className="ll-subheading">Do not mix historic and current rules in a default statistic.</p>
       <label className="ll-field"><span>Game</span><select value={gameId} onChange={e=>selectGame(e.target.value as GameId)}>{games.map(g=><option key={g.id} value={g.id}>{g.label}</option>)}</select></label>
