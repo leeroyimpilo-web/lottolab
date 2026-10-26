@@ -86,7 +86,7 @@ export function ToolScreen(props:ToolScreenProps){
   const [counts,setCounts]=useState<Record<string,number>>({});
   const [money,setMoney]=useState<Record<string,string>>({});
   const [exampleEmpty,setExampleEmpty]=useState(false);
-  const pickerMode=(id==="T02"||id==="T03"||id==="T05"||id==="T06")?"subset":id==="T14"?"wheel":"board";
+  const pickerMode=(id==="T02"||id==="T03"||id==="T05"||id==="T06"||id==="T09")?"subset":id==="T14"?"wheel":"board";
   // Input choices are strictly UI previews. Each field has its own independent value.
   function fieldOptions(field:string):string[]|null {
     const poolChoices=game.specialPool?["Main balls",game.specialLabel||"Special ball"]:
@@ -170,8 +170,8 @@ export function ToolScreen(props:ToolScreenProps){
       <div className="ll-section-head"><h2>Set up your search</h2><Settings2 size={19}/></div>
       {neutralSelect("Lottery game",games.map(g=>g.label),game.label,name=>setGame(games.find(g=>g.label===name)?.id||"lotto"))}
       <div className="ll-field"><span>Rule version</span><button type="button" className="ll-select-numbers" onClick={onSelectEra}>{era}<ChevronRight size={16}/></button></div>
-      {(id==="T02"||id==="T03"||id==="T06"||id==="T13"||id==="T14"||id==="T09")&&
-      <div className="ll-field"><span>{id==="T02"?"Search numbers":id==="T14"?"Wheel pool":"Numbers"}</span><button type="button" className="ll-select-numbers" onClick={()=>onOpenPicker(pickerMode)}>{selectedNumbers.length?selectedNumbers.join(", "):"Select number balls"}<ChevronRight size={18}/></button></div>}
+      {(id==="T02"||id==="T09")&&
+      <div className="ll-field"><span>{id==="T02"?"Search numbers":"Include, exclude or lock numbers"}</span><button type="button" className="ll-select-numbers" onClick={()=>onOpenPicker(pickerMode)}>{selectedNumbers.length?selectedNumbers.join(", "):"Select number balls"}<ChevronRight size={18}/></button></div>}
       {t.fields.map(field=><div key={field}>{customField(field)}</div>)}
       <button type="button" className="ll-collapse" onClick={()=>setAdvanced(x=>!x)} aria-expanded={advanced}><SlidersHorizontal size={16}/> {advanced?"Hide":"Show"} additional options <ChevronRight size={16}/></button>
       {advanced&&<div className="ll-extra-options">
