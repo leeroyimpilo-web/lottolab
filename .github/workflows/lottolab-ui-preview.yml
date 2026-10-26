@@ -30,6 +30,15 @@ jobs:
         run: pnpm install --no-frozen-lockfile
       - name: TypeScript checks
         run: pnpm exec tsc --noEmit
+      - name: Install standalone Android UI bundle dependencies
+        working-directory: lottolab-ui
+        run: npm install --no-audit --no-fund
+      - name: Typecheck standalone Android UI components
+        working-directory: lottolab-ui
+        run: npm run typecheck
+      - name: Build standalone offline UI assets (no APK)
+        working-directory: lottolab-ui
+        run: npm run build
       - name: Static export (including /ui-preview and /ui-preview/gallery)
         env:
           NEXT_TELEMETRY_DISABLED: "1"
