@@ -21,7 +21,20 @@ function BallStrip({list,game,special}:{list:number[];game:Game;special?:number}
 function ExampleRow({title,detail,right,onClick}:{title:string;detail?:string;right?:string;onClick?:()=>void}) {
   return <button type="button" className="ll-entry" onClick={onClick} disabled={!onClick}><span><strong>{title}</strong>{detail&&<small>{detail}</small>}</span><span className="ll-entry-side">{right}{onClick&&<ChevronRight size={16}/>}</span></button>;
 }
+// Hand-authored demonstration figures for the six provisional game layouts.
+// These are fixed fixtures, never computed from the user's controls or a live draw.
+const exampleProfiles:Record<Game["id"],{
+  sum:string;oddEven:string;spread:string;mainCount:string;exactLineOdds:string;
+}> = {
+  lotto:{sum:"142",oddEven:"2 odd / 4 even",spread:"43",mainCount:"20,358,520",exactLineOdds:"20,358,520"},
+  plus1:{sum:"161",oddEven:"3 odd / 3 even",spread:"47",mainCount:"20,358,520",exactLineOdds:"20,358,520"},
+  max5:{sum:"147",oddEven:"3 odd / 3 even",spread:"38",mainCount:"20,358,520",exactLineOdds:"20,358,520"},
+  powerball:{sum:"129",oddEven:"3 odd / 2 even",spread:"41",mainCount:"2,118,760",exactLineOdds:"33,900,160"},
+  xtra:{sum:"101",oddEven:"3 odd / 2 even",spread:"38",mainCount:"2,118,760",exactLineOdds:"33,900,160"},
+  daily:{sum:"84",oddEven:"4 odd / 1 even",spread:"31",mainCount:"376,992",exactLineOdds:"376,992"},
+};
 function ToolBody({id,game,onNavigate,selectedNumbers,view}:{id:ToolId;game:Game;onNavigate:ToolScreenProps["onNavigate"];selectedNumbers:number[];view:"bars"|"table"}) {
+  const profile=exampleProfiles[game.id];
   const ball=(n:number)=><NumberBall value={n} size="tiny" accent={game.accent}/>;
   const bar=(label:string,val:number,secondary:string)=><div className="ll-mini-bar" key={label}><div className="ll-mini-bar-head"><strong>{label}</strong><span>{secondary}</span></div><div className="ll-mini-bar-track"><div style={{width:Math.min(100,val)+"%"}}/></div></div>;
   switch(id) {
@@ -46,20 +59,20 @@ function ToolBody({id,game,onNavigate,selectedNumbers,view}:{id:ToolId;game:Game
     case "T06":return <><div className="ll-card-row"><strong>Anchor number {selectedNumbers[0]||12}</strong>{ball(selectedNumbers[0]||12)}</div>
       {[[4,10],[19,8],[26,7],[34,6]].map(([n,count])=><div className="ll-gap-row" key={n}>{ball(n)}<span className="ll-flex1">Appeared alongside anchor</span><strong>{count} / 100</strong></div>)}
       <p className="ll-footnote">A companion count uses the entire eligible example sample as its denominator; it does not mean a number is more likely next time.</p></>;
-    case "T07":return <>{bar("Three odd / three even",34,"Example 34 of 100")}{bar("Sum 100–180",26,"Example 26 of 100")}{bar("At least one consecutive pair",18,"Example 18 of 100")}
+    case "T07":return <>{bar(game.pick===6?"Three odd / three even":"Three odd / two even",34,"Example 34 of 100")}{bar("Sum 100–180",26,"Example 26 of 100")}{bar("At least one consecutive pair",18,"Example 18 of 100")}
       <p className="ll-footnote">These are invented descriptive distributions. Neither "balanced" nor "unbalanced" lines have a predictive edge.</p></>;
-    case "T08":return <><div className="ll-stats-grid"><Figure label="Example repeated numbers" value="2"/><Figure label="Compared draws" value="2"/></div><div className="ll-card-row"><span>Repeated main numbers</span><BallStrip list={[12,26]} game={game}/></div>
+    case "T08":return <><div className="ll-stats-grid"><Figure label="Example repeated numbers" value="2"/><Figure label="Compared draws" value="2"/></div><div className="ll-card-row"><span>Repeated main numbers</span><BallStrip list={game.numbers.slice(0,2)} game={game}/></div>
       <div className="ll-example-box">Compared DEMO-001 with DEMO-002. This is a visual example, not an analysis of real results.</div></>;
     case "T09":return <><p className="ll-footnote">Illustrative, fixed boards only. These are NOT newly or randomly generated lines.</p>
-      {sampleGenerated.slice(0,3).map((n,i)=><div className="ll-match-row" key={i}><strong>Example board {String.fromCharCode(65+i)}</strong><BallStrip list={n.filter(x=>x<=game.pool).slice(0,game.pick)} game={game} special={game.specialPool?i+2:undefined}/></div>)}</>;
-    case "T10":return <><Figure label="Illustration: 6 from 52" value="20,358,520" sub="Example of a combination-count result view"/><details className="ll-details"><summary>How the formula will be explained</summary><p>n choose k counts unique, unordered groups of k numbers from n. Actual calculations are deferred until functionality is approved.</p></details><p className="ll-footnote">This example is fixed and does not respond to the inputs above.</p></>;
-    case "T11":return <><Figure label="Sample jackpot odds display" value="1 in 20,358,520" sub="Illustrative 6-from-52 main-number calculation only"/><p className="ll-footnote">Not a verified payout-tier probability for {game.label}. Additional special-ball rules and lower-tier overlap require separately verified formulas.</p><ExampleRow title="Assumptions" detail="Fair independent draw; unordered unique main-number combinations"/></>;
+      {sampleGenerated.slice(0,3).map((n,i)=><div className="ll-match-row" key={i}><strong>Example board {String.fromCharCode(65+i)}</strong><BallStrip list={n.filter(x=>x<=game.pool).length>=game.pick?n.filter(x=>x<=game.pool).slice(0,game.pick):game.numbers} game={game} special={game.specialPool?i+2:undefined}/></div>)}</>;
+    case "T10":return <><Figure label={"Example: "+game.pick+" from "+game.pool} value={profile.mainCount} sub="Fixed sample combination-count layout"/><details className="ll-details"><summary>How the formula will be explained</summary><p>n choose k counts unique, unordered groups of k numbers from n. Actual calculations are deferred until functionality is approved.</p></details><p className="ll-footnote">This example is fixed and does not respond to the inputs above.</p></>;
+    case "T11":return <><Figure label="Illustrative exact-line odds" value={"1 in "+profile.exactLineOdds} sub="Hand-authored fair-draw example for provisional game pools"/><p className="ll-footnote">Not a verified payout-tier probability for {game.label}. Additional special-ball rules and lower-tier overlap require separately verified formulas.</p><ExampleRow title="Assumptions" detail="Fair independent draw; unordered unique main-number combinations"/></>;
     case "T12":return <><div className="ll-stats-grid"><Figure label="Illustrative line total" value="6 boards"/><Figure label="Example total" value="R 120.00" sub="Not an operator price"/></div>
       <div className="ll-gap-row"><span className="ll-flex1">Sample board quantity × example price</span><strong>R 120.00</strong></div>
       <div className="ll-gap-row"><span className="ll-flex1">Verified price unavailable</span><strong>Pending</strong></div><p className="ll-footnote">Actual entry prices, add-ons and sales conditions are not available in the UI prototype.</p></>;
-    case "T13":return <><BallStrip list={selectedNumbers.length>=game.pick?selectedNumbers.slice(0,game.pick):game.numbers} game={game}/>
-      <div className="ll-stats-grid"><Figure label="Example sum" value="142"/><Figure label="Odd / even" value="2 / 4"/></div><div className="ll-stats-grid"><Figure label="Example spread" value="43"/><Figure label="Consecutive pairs" value="0"/></div>
-      <p className="ll-footnote">Layout illustration only. No quality score or claim of increased odds is provided.</p></>;
+    case "T13":return <><BallStrip list={game.numbers} game={game}/>
+      <div className="ll-stats-grid"><Figure label="Example sum" value={profile.sum}/><Figure label="Odd / even" value={profile.oddEven}/></div><div className="ll-stats-grid"><Figure label="Example spread" value={profile.spread}/><Figure label="Consecutive pairs" value="0"/></div>
+      <p className="ll-footnote">This describes the fixed example line shown above, not your chosen input. No quality score or predictive advantage is claimed.</p></>;
     case "T14":return <><div className="ll-warning-inline"><strong>Coverage not verified</strong><p>A reduced wheel has no guarantee until its specific construction and chosen pool are independently validated.</p></div>
       <Figure label="Example line count" value="28" sub="Not computed for the selected pool"/>
       <p className="ll-footnote">A full wheel covers all lines from its chosen pool at a proportional cost; reduced/fixed examples must state exact conditional guarantees.</p></>;
