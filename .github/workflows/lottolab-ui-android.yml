@@ -1,10 +1,5 @@
 name: LottoLab UI-Only Android Preview APK
 on:
-  push:
-    branches: [lottolab-ui-first]
-    paths:
-      - "lottolab-ui/**"
-      - ".github/workflows/lottolab-ui-android.yml"
   workflow_dispatch:
 permissions:
   contents: read
