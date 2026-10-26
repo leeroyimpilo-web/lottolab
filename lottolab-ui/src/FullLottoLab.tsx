@@ -58,6 +58,7 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
   const [range,setRange]=useState("Last 100 eligible draws");
   const [boards,setBoards]=useState<MockBoard[]>(initialBoards);
   const [boardId,setBoardId]=useState("A");
+  const [editingBoardId,setEditingBoardId]=useState<string|null>(null);
   const [name,setName]=useState("My selected numbers");
   const [notes,setNotes]=useState("");
   const [pickerMode,setPickerMode]=useState<PickerMode>("board");
@@ -115,12 +116,21 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
     if(pickerTarget==="board"||pickerTarget==="check"){setSelected([...selected]);}
     setSheet(null);
   }
-  function selectBoard(b:MockBoard){setBoardId(b.id);setGameId(b.gameId);next("C10");}
+  function selectBoard(b:MockBoard){setBoardId(b.id);setEditingBoardId(null);setGameId(b.gameId);next("C10");}
   function navMenu(s:ScreenId){setSheet(null);if(s==="T01"){next("LAB");return;}next(s);}
-  function openSave(returnTo:Route=view){setReturnRoute(returnTo);setName("My selected numbers");setSavedPreview(false);setSheet("C25");}
+  function openSave(returnTo:Route=view){setReturnRoute(returnTo);setName(isTool(returnTo)?"My research preview":editingBoardId?(boards.find(b=>b.id===editingBoardId)?.name||"My selected numbers"):"My selected numbers");setSavedPreview(false);setSheet("C25");}
+  function startNewBoard(){setEditingBoardId(null);setSelected([]);setSpecial(undefined);next("C11");}
   function saveSession(){
-    const item:MockBoard={id:"D"+String(boards.length+1),name:name.trim()||"Untitled board",gameId,main:selected.length===game.pick?selected:game.numbers,special:game.specialPool?(special||game.special):undefined,note:notes||"UI preview only — resets when reopened.",label:"Example board"};
-    setBoards(b=>[...b,item]);setBoardId(item.id);setSavedPreview(true);
+    // A tool's research preview must never silently become a made-up lottery board.
+    if(isTool(returnRoute)){setSavedPreview(true);return;}
+    if(selected.length!==game.pick||(game.specialPool&&special===undefined))return;
+    const prior=boards.find(b=>b.id===editingBoardId);
+    const item:MockBoard={id:prior?.id||"D"+String(boards.length+1),name:name.trim(),
+      gameId,main:[...selected],special:game.specialPool?special:undefined,
+      note:notes||prior?.note||"UI preview only — resets when reopened.",label:"Example board"};
+    if(prior)setBoards(b=>b.map(x=>x.id===prior.id?item:x));
+    else setBoards(b=>[...b,item]);
+    setBoardId(item.id);setEditingBoardId(null);setSavedPreview(true);
   }
   const demoFallback=stateOverride==="empty"||stateOverride==="offline-empty"||stateOverride==="missing"||stateOverride==="no-match";
   const section=(heading:string,caption?:string)=><div className="ll-section-head"><h2>{heading}</h2>{caption&&<small>{caption}</small>}</div>;
@@ -138,7 +148,7 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
       </div>
       {stateOverride!=="populated"&&<StatusCard kind={stateOverride}/>}
       {section("Latest results","Examples only")}
-      {!demoFallback&&games.map(g=><TicketCard key={g.id} game={g} onView={()=>{selectGame(g.id);next("C06")}} onQuick={()=>{selectGame(g.id);next("C13")}} onPick={()=>{selectGame(g.id);next("C11")}}/>)}
+      {!demoFallback&&games.map(g=><TicketCard key={g.id} game={g} onView={()=>{selectGame(g.id);next("C06")}} onQuick={()=>{selectGame(g.id);next("C13")}} onPick={()=>{selectGame(g.id);startNewBoard()}}/>)}
       {demoFallback&&<div className="ll-empty-state"><Search size={28}/><h3>Draw results unavailable</h3><p>The app needs verified draw data in its later functionality phase.</p><Pill variant="outline" onClick={()=>setStateOverride("populated")}>Preview example results</Pill></div>}
       <button type="button" className="ll-card ll-cta-card ll-card-row" onClick={()=>next("C07")}><span className="ll-cta-icon"><TicketCheck size={23}/></span><span className="ll-flex1"><h3>Check my numbers</h3><p>Compare a board with a draw</p></span><ChevronRight size={19}/></button>
       <button type="button" className="ll-card ll-cta-card ll-card-row" onClick={()=>next("C09")}><span className="ll-cta-icon"><Layers3 size={23}/></span><span className="ll-flex1"><h3>My boards</h3><p>Keep your example number lines together</p></span><ChevronRight size={19}/></button>
@@ -149,11 +159,11 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
   function catalogue(){
     return <>{section("Choose a game","Provisional rules")}
       <p className="ll-subheading">All information here is sample data. Select a game to open its overview.</p>
-      {games.map(g=><TicketCard key={g.id} game={g} compact onView={()=>{selectGame(g.id);next("C04")}} onQuick={()=>{selectGame(g.id);next("C13")}} onPick={()=>{selectGame(g.id);next("C11")}}/>)}
+      {games.map(g=><TicketCard key={g.id} game={g} compact onView={()=>{selectGame(g.id);next("C04")}} onQuick={()=>{selectGame(g.id);next("C13")}} onPick={()=>{selectGame(g.id);startNewBoard()}}/>)}
       <RowLink title="Retired game formats" sub="Separate historical rules and archive entries" onClick={()=>{setEra(retiredRuleLabel);setSheet("C23")}} icon={<Clock3 size={20}/>}/></>;
   }
   function gameOverview(){
-    return <><DemoLabel/><div className="ll-vspace"/><TicketCard game={game} onView={()=>next("C06")} onQuick={()=>next("C13")} onPick={()=>next("C11")}/>
+    return <><DemoLabel/><div className="ll-vspace"/><TicketCard game={game} onView={()=>next("C06")} onQuick={()=>next("C13")} onPick={startNewBoard}/>
       <div className="ll-list-group"><RowLink title="Latest sample draw" sub="Winning balls and prize breakdown" onClick={()=>next("C06")}/>
       <RowLink title="Results history" sub="Browse older example draw dates" onClick={()=>next("C05")}/>
       <RowLink title="Game rules & archive" sub={era} onClick={()=>setSheet("C23")}/></div>
@@ -203,9 +213,9 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
       <Pill onClick={()=>next("C07")}>Change my board</Pill><div className="ll-vspace"/><Pill variant="outline" onClick={()=>openSave("C08")}>Save board preview</Pill></>;
   }
   function boardList(){
-    return <><div className="ll-card-row ll-top-gap">{section("Example boards")}<button type="button" className="ll-text-link" onClick={()=>next("C11")}><Plus size={18}/> Add board</button></div>
+    return <><div className="ll-card-row ll-top-gap">{section("Example boards")}<button type="button" className="ll-text-link" onClick={startNewBoard}><Plus size={18}/> Add board</button></div>
       <p className="ll-subheading">Boards are held in this preview session only and reset when you restart the application.</p>
-      {(demoFallback||boards.length===0)?<div className="ll-empty-state"><Layers3 size={29}/><h3>No example boards</h3><p>Create a board to preview editing and naming.</p><Pill onClick={()=>next("C11")}>Add board</Pill></div>:
+      {(demoFallback||boards.length===0)?<div className="ll-empty-state"><Layers3 size={29}/><h3>No example boards</h3><p>Create a board to preview editing and naming.</p><Pill onClick={startNewBoard}>Add board</Pill></div>:
       <div className="ll-list-group">{boards.map(b=><RowLink key={b.id} title={b.name} sub={gameName(b.gameId)+" · "+b.main.join(" · ")} right="UI sample" onClick={()=>selectBoard(b)}/>)}</div>}
       <Pill onClick={()=>next("C11")}>Create new board</Pill></>;
   }
@@ -214,10 +224,10 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
       <InfoPair label="Game" value={activeGame.label}/><InfoPair label="Associated draw" value="None · personal board"/><InfoPair label="Created" value="This preview session"/><InfoPair label="Purchase status" value="Not a ticket"/>
       <p className="ll-kicker ll-top-gap">Selected numbers</p><BoardBalls numbers={activeBoard?.main||game.numbers} game={activeGame} special={activeBoard?.special}/>
       <p className="ll-footnote">{activeBoard?.note}</p></div>
-      <div className="ll-list-group ll-block-gap"><RowLink title="Edit this board" sub="Update the visual number selection" onClick={()=>{setGameId(activeBoard.gameId);setSelected(activeBoard.main);setSpecial(activeBoard.special);next("C11")}}/>
+      <div className="ll-list-group ll-block-gap"><RowLink title="Edit this board" sub="Update the visual number selection" onClick={()=>{setGameId(activeBoard.gameId);setSelected(activeBoard.main);setSpecial(activeBoard.special);setEditingBoardId(activeBoard.id);next("C11")}}/>
       <RowLink title="Check sample draw" sub="Preview comparison, not a verified check" onClick={()=>{setGameId(activeBoard.gameId);setSelected(activeBoard.main);setSpecial(activeBoard.special);next("C07")}}/>
       <RowLink title="Export layout preview" sub="No PDF is actually generated" onClick={()=>next("C27")}/></div>
-      <Pill onClick={()=>{setGameId(activeBoard.gameId);setSelected(activeBoard.main);setSpecial(activeBoard.special);next("C11")}}>Use these numbers</Pill>
+      <Pill onClick={()=>{setGameId(activeBoard.gameId);setSelected(activeBoard.main);setSpecial(activeBoard.special);setEditingBoardId(activeBoard.id);next("C11")}}>Use these numbers</Pill>
       <button type="button" className="ll-danger-link" onClick={()=>{setConfirmAction("delete");setSheet("C26")}}><Trash2 size={17}/> Remove example board</button></>;
   }
   function boardEditor(){
@@ -243,7 +253,13 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
         const displayed=nums.length===game.pick?nums:game.numbers;
         return <div className="ll-card ll-block-gap" key={i}><div className="ll-card-row"><strong>Board {String.fromCharCode(65+i)}</strong><span className="ll-muted">Sample</span></div><BoardBalls numbers={displayed} game={game} special={game.specialPool?(i%game.specialPool)+1:undefined}/></div>;
       })}
-      <Pill onClick={()=>openSave("C14")}>Save preview</Pill><div className="ll-vspace"/><Pill variant="outline" onClick={()=>next("C27")}>Export layout preview</Pill></>;
+      <Pill onClick={()=>{
+        const example=sampleGenerated[0].filter(n=>n<=game.pool).slice(0,game.pick);
+        setSelected(example.length===game.pick?example:game.numbers);
+        setSpecial(game.specialPool?1:undefined);
+        setEditingBoardId(null);
+        openSave("C14");
+      }}>Save sample board</Pill><div className="ll-vspace"/><Pill variant="outline" onClick={()=>next("C27")}>Export layout preview</Pill></>;
   }
   function calendar(){
     const monthDate=new Date(2026,9+monthOffset,1);
@@ -399,12 +415,12 @@ export default function FullLottoLab({startInGallery=false}:{startInGallery?:boo
       {["Last 20 eligible draws","Last 50 eligible draws","Last 100 eligible draws","All eligible draws","Custom dates (example)"].map(s=><button type="button" className={"ll-choice-row"+(range===s?" selected":"")} onClick={()=>setRange(s)} key={s}><span>{s}</span>{range===s&&<Check size={17}/>}</button>)}
       {range.includes("Custom")&&<div className="ll-two-controls"><label>From<input type="date" defaultValue="2026-10-01"/></label><label>To<input type="date" defaultValue="2026-10-26"/></label></div>}
       <Pill onClick={()=>setSheet(null)}>Apply sample filter</Pill></div>;
-    if(sheet==="C25")return <div className="ll-small-sheet"><h2>Save board preview</h2><p className="ll-subheading">Session-only examples. No database or account is connected.</p>
-      {!savedPreview?<><label className="ll-field"><span>Board name</span><input value={name} onChange={e=>setName(e.target.value)} maxLength={60} placeholder="My numbers"/></label>
+    if(sheet==="C25")return <div className="ll-small-sheet"><h2>{isTool(returnRoute)?"Save research preview":editingBoardId?"Update example board":"Save board preview"}</h2><p className="ll-subheading">Session-only examples. No database or account is connected.</p>
+      {!savedPreview?<><label className="ll-field"><span>{isTool(returnRoute)?"Research name":"Board name"}</span><input value={name} onChange={e=>setName(e.target.value)} maxLength={60} placeholder="My numbers"/></label>
       <label className="ll-field"><span>Notes (optional)</span><textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={3} placeholder="Private note for this example"/></label>
-      {boards.some(b=>b.name.toLowerCase()===name.trim().toLowerCase())&&<StatusCard kind="invalid"/>}
-      <Pill disabled={!name.trim()||boards.some(b=>b.name.toLowerCase()===name.trim().toLowerCase())} onClick={saveSession}>Save sample board</Pill></>:
-      <div className="ll-empty-state"><Check size={28}/><h3>Saved in this preview session</h3><p>The example will reset on app restart.</p><Pill onClick={()=>{setSheet(null);next("C09")}}>View my boards</Pill></div>}
+      {boards.some(b=>b.id!==editingBoardId&&b.name.toLowerCase()===name.trim().toLowerCase())&&<StatusCard kind="invalid"/>}
+      <Pill disabled={(!isTool(returnRoute)&&(selected.length!==game.pick||(!!game.specialPool&&special===undefined)))||!name.trim()||boards.some(b=>b.id!==editingBoardId&&b.name.toLowerCase()===name.trim().toLowerCase())} onClick={saveSession}>{isTool(returnRoute)?"Save sample research":editingBoardId?"Update sample board":"Save sample board"}</Pill></>:
+      <div className="ll-empty-state"><Check size={28}/><h3>{isTool(returnRoute)?"Research preview marked saved":"Saved in this preview session"}</h3><p>{isTool(returnRoute)?"This is a UI example only; no search data or report was persisted.":"The example will reset on app restart."}</p><Pill onClick={()=>{setSheet(null);if(!isTool(returnRoute))next("C09")}}>{isTool(returnRoute)?"Return to research":"View my boards"}</Pill></div>}
       <Pill variant="outline" onClick={()=>setSheet(null)}>Close</Pill></div>;
     if(sheet==="C26")return <div className="ll-small-sheet"><TriangleAlert size={28}/><h2>{confirmAction==="delete"?"Remove example board?":"Discard your changes?"}</h2>
       <p className="ll-subheading">This affects only the temporary prototype session.</p>
