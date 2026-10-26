@@ -1,0 +1,49 @@
+name: LottoLab UI Sprint 11 browser and screen-atlas review
+on:
+  push:
+    branches: [lottolab-ui-first]
+    paths:
+      - "lottolab-ui/**"
+      - "app/ui-preview/**"
+      - ".github/workflows/lottolab-ui-review.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-ui-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.3.4
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Install root workspace
+        run: pnpm install --no-frozen-lockfile
+      - name: Build full Next.js UI preview
+        run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+      - name: Install browser test dependency in isolated UI workspace
+        run: npm install --prefix lottolab-ui --no-save --no-audit --no-fund playwright@1.56.1
+      - name: Install Chromium with system dependencies
+        run: cd lottolab-ui && npx playwright install --with-deps chromium
+      - name: Serve exported preview
+        run: |
+          python3 -m http.server 4173 --directory out > /tmp/lottolab-ui-server.log 2>&1 &
+          sleep 3
+      - name: Verify 44 routes and capture mobile screen atlas
+        run: node lottolab-ui/tests/audit.mjs
+      - name: Upload screenshot atlas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: LottoLab-UI-Sprint11-Screen-Atlas
+          path: lottolab-ui/artifacts/atlas/
+          if-no-files-found: warn
+          retention-days: 30
