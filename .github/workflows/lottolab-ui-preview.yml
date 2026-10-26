@@ -9,6 +9,9 @@ on:
       - ".github/workflows/lottolab-ui-preview.yml"
   workflow_dispatch:
 
+concurrency:
+  group: lottolab-ui-validation-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 
