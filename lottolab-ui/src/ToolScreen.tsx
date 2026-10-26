@@ -31,8 +31,8 @@ function ToolBody({id,game,onNavigate,selectedNumbers,view}:{id:ToolId;game:Game
       <div className="ll-list-group">{sampleNumberFrequency.map(x=><ExampleRow key={x.number} title={"Number "+x.number} detail={x.count+" / 100 eligible example draws"} right={x.count+"%"} onClick={()=>onNavigate("T03")}/>)}</div>}
       <p className="ll-footnote">Percent = sample draws containing the number ÷ eligible sample draws. A frequency describes history, not a future advantage.</p></>;
     case "T02":return <><Figure label="Example search" value="2 matching draws" sub="100 invented eligible draws examined"/>
-      <p className="ll-footnote">Contains all: every chosen main number occurred somewhere within the same draw, not necessarily an exact complete line.</p>
-      {["24 Oct 2026","10 Oct 2026"].map((date,i)=><div className="ll-match-row" key={date}><div className="ll-card-row"><strong>{date} · DEMO</strong><button className="ll-text-link" onClick={()=>onNavigate("C06")}>Draw details <ChevronRight size={15}/></button></div><BallStrip list={i===0?[4,12,19,26,34,47]:[4,12,19,29,38,41]} game={game}/><small>{i===0?"All selected example numbers highlighted in reference view":"Only a subset of the invented comparison numbers appears"}</small></div>)}
+      <p className="ll-footnote">Example query: main numbers 4, 12 and 19 (fixed fixture, not linked to the inputs). Contains all means each number appears within the same draw, not necessarily an exact complete line.</p>
+      {["24 Oct 2026","10 Oct 2026"].map((date,i)=><div className="ll-match-row" key={date}><div className="ll-card-row"><strong>{date} · DEMO</strong><button className="ll-text-link" onClick={()=>onNavigate("C06")}>Draw details <ChevronRight size={15}/></button></div><BallStrip list={i===0?[4,12,19,26,34,47]:[4,12,19,29,38,41]} game={game}/><small>{i===0?"All selected example numbers highlighted in reference view":"All three example query numbers also appear; the other main balls differ"}</small></div>)}
       <p className="ll-footnote">Separate search modes: exact full line, contains-all subset and match count. Bonus/special balls are always a distinct pool.</p></>;
     case "T03":return <><div className="ll-profile-ball"><NumberBall value={selectedNumbers[0]||12} size="large" accent={game.accent}/><strong>Number profile</strong></div>
       <div className="ll-stats-grid"><Figure label="Appearances" value="16 / 100" sub="16% of eligible example draws"/><Figure label="Last seen" value="3 draws ago"/></div>
@@ -47,7 +47,7 @@ function ToolBody({id,game,onNavigate,selectedNumbers,view}:{id:ToolId;game:Game
     case "T06":return <><div className="ll-card-row"><strong>Anchor number {selectedNumbers[0]||12}</strong>{ball(selectedNumbers[0]||12)}</div>
       {[[4,10],[19,8],[26,7],[34,6]].map(([n,count])=><div className="ll-gap-row" key={n}>{ball(n)}<span className="ll-flex1">Appeared alongside anchor</span><strong>{count} / 100</strong></div>)}
       <p className="ll-footnote">A companion count uses the entire eligible example sample as its denominator; it does not mean a number is more likely next time.</p></>;
-    case "T07":return <>{bar("Three odd / three even",69,"Example 34 of 100")}{bar("Sum 100–180",52,"Example 26 of 100")}{bar("At least one consecutive pair",37,"Example 18 of 100")}
+    case "T07":return <>{bar("Three odd / three even",34,"Example 34 of 100")}{bar("Sum 100–180",26,"Example 26 of 100")}{bar("At least one consecutive pair",18,"Example 18 of 100")}
       <p className="ll-footnote">These are invented descriptive distributions. Neither "balanced" nor "unbalanced" lines have a predictive edge.</p></>;
     case "T08":return <><div className="ll-stats-grid"><Figure label="Example repeated numbers" value="2"/><Figure label="Compared draws" value="2"/></div><div className="ll-card-row"><span>Repeated main numbers</span><BallStrip list={[12,26]} game={game}/></div>
       <div className="ll-example-box">Compared DEMO-001 with DEMO-002. This is a visual example, not an analysis of real results.</div></>;
@@ -59,7 +59,7 @@ function ToolBody({id,game,onNavigate,selectedNumbers,view}:{id:ToolId;game:Game
       <div className="ll-gap-row"><span className="ll-flex1">Sample board quantity × example price</span><strong>R 120.00</strong></div>
       <div className="ll-gap-row"><span className="ll-flex1">Verified price unavailable</span><strong>Pending</strong></div><p className="ll-footnote">Actual entry prices, add-ons and sales conditions are not available in the UI prototype.</p></>;
     case "T13":return <><BallStrip list={selectedNumbers.length>=game.pick?selectedNumbers.slice(0,game.pick):game.numbers} game={game}/>
-      <div className="ll-stats-grid"><Figure label="Example sum" value="142"/><Figure label="Odd / even" value="3 / 3"/></div><div className="ll-stats-grid"><Figure label="Example spread" value="43"/><Figure label="Consecutive pairs" value="0"/></div>
+      <div className="ll-stats-grid"><Figure label="Example sum" value="142"/><Figure label="Odd / even" value="2 / 4"/></div><div className="ll-stats-grid"><Figure label="Example spread" value="43"/><Figure label="Consecutive pairs" value="0"/></div>
       <p className="ll-footnote">Layout illustration only. No quality score or claim of increased odds is provided.</p></>;
     case "T14":return <><div className="ll-warning-inline"><strong>Coverage not verified</strong><p>A reduced wheel has no guarantee until its specific construction and chosen pool are independently validated.</p></div>
       <Figure label="Example line count" value="28" sub="Not computed for the selected pool"/>
