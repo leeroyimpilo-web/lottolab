@@ -30,6 +30,19 @@ try {
    if(overlays.has(id))assert(await page.locator(".ll-full-scrim").isVisible(),"Overlay did not open: "+id);
    else if(id!=="C01")assert(await page.locator("h1").count()>0,"No title for route "+id);
    summary.push(id);
+   await page.screenshot({path:target+"/screen-"+id+".png",fullPage:!overlays.has(id)});
+   if(id.startsWith("T")){
+     await page.getByRole("button",{name:/View sample result/}).click();
+     assert(await page.getByText("Example result",{exact:true}).isVisible(),"Missing sample tool output for "+id);
+     await page.screenshot({path:target+"/tool-result-"+id+".png",fullPage:true});
+   }
+ }
+ const states=["populated","empty","loading","offline-cached","offline-empty","stale","missing","invalid","pending","no-match"];
+ for(const state of states){
+   await page.goto(galleryURL,{waitUntil:"domcontentloaded"});
+   await page.locator(".ll-card .ll-field select").first().selectOption(state);
+   await page.getByRole("button",{name:/C05 · Results & history/}).click();
+   await page.screenshot({path:target+"/state-results-"+state+".png",fullPage:true});
  }
  await page.goto(homeURL,{waitUntil:"networkidle"});
  assert(await page.getByText("Latest results",{exact:true}).isVisible(),"Home has no results");
@@ -86,5 +99,5 @@ try {
  await page.getByLabel("Large text preview").check();
  await page.screenshot({path:target+"/settings-large-text.png",fullPage:true});
  assert(errors.length===0,"Browser errors: "+errors.join(" | "));
- console.log("PASS: "+summary.length+" selectable routes, mobile widths 360/390/412, six-column picker, navigation, sample tool, large-text preview.");
+ console.log("PASS: "+summary.length+" routes, all 17 sample tool output views, 10 result states and mobile 360/390/412 screen atlas. Picker, menu, calendar and board input flow verified.");
 } finally { await browser.close(); }
